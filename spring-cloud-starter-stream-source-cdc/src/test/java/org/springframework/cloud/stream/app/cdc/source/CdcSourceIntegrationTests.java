@@ -66,9 +66,9 @@ public abstract class CdcSourceIntegrationTests {
 			"cdc.config.database.hostname=localhost",
 			"cdc.config.database.port=3306",
 
-//			"cdc.includeSchema=true",
+			"cdc.includeSchema=false",
 
-			"cdc.filtering.enabled=true",
+			"cdc.flattering.enabled=true",
 	})
 	public static class CdcMysqlTests extends CdcSourceIntegrationTests {
 

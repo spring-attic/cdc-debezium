@@ -76,7 +76,7 @@ cdc.config.database.hostname=localhost # <3>
 cdc.config.database.port=3306 # <3>
 
 cdc.includeSchema=true # <4>
-cdc.filtering.enabled=true # <5>
+cdc.flattering.enabled=true # <5>
 ----
 
 <1> Metadata used to identify and dispatch the incoming events.
@@ -122,7 +122,7 @@ cdc.config.database.hostname=localhost # <3>
 cdc.config.database.port=5432 # <3>
 
 cdc.includeSchema=true # <4>
-cdc.filtering.enabled=true # <5>
+cdc.flattering.enabled=true # <5>
 ----
 
 <1> Metadata used to identify and dispatch the incoming events.

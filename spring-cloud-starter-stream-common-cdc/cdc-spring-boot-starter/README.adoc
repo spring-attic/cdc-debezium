@@ -54,7 +54,7 @@ cdc.config.database.port=3306
 ----
 
 Also `cdc.includeSchema` property allows you to include or exclude the value schema from the `SourceRecord` content.
-The `cdc.filtering.enabled`, `cdc.filtering.dropTombstones`, `cdc.filtering.dropDeletes` properties to control the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering] feature.
+The `cdc.flattering.enabled`, `cdc.flattering.dropTombstones`, `cdc.flattering.dropDeletes` properties to control the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering] feature.
 
 The full list of properties:
 
