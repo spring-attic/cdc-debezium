@@ -102,31 +102,44 @@ Use following properties to connect the CDC Source to the PostgreSQL:
 
 [source]
 ----
-cdc.config.connector.class=io.debezium.connector.postgresql.PostgresConnector # <1>
+cdc.config.offset.flush.interval.ms=60000
+cdc.config.name=my-sql-connector
+cdc.config.server.id=85744
 
-cdc.config.database.user=postgres  # <2>
-cdc.config.database.password=postgres # <2>
-cdc.config.database..dbname=postgres # <2>
-cdc.config.database.hostname=localhost # <2>
-cdc.config.database.port=5432 # <2>
+cdc.config.database.server.name=my-app-connector
 
-cdc.includeSchema=true # <3>
-cdc.filtering.enabled=true # <4>
+cdc.config.database.history=io.debezium.relational.history.MemoryDatabaseHistory <1>
+
+cdc.config.connector.class=io.debezium.connector.postgresql.PostgresConnector # <2>
+
+cdc.config.database.user=postgres  # <3>
+cdc.config.database.password=postgres # <3>
+cdc.config.database..dbname=postgres # <3>
+cdc.config.database.hostname=localhost # <3>
+cdc.config.database.port=5432 # <3>
+
+cdc.includeSchema=true # <4>
+cdc.filtering.enabled=true # <5>
 ----
 
-<1> Required property that configures the CDC Source to use `PostgresConnector`.
-<2> Required properties to connection to the PostgreSQL on `localhost:5432` as `postgres` user.
-<3> Includes the https://debezium.io/docs/connectors/mysql/#change-events-value[Change Event Value] schema in the `SourceRecord` events.
-<4> Enables the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering].
+<2> Required property that configures the CDC Source to use `PostgresConnector`.
+<3> Required properties to connection to the PostgreSQL on `localhost:5432` as `postgres` user.
+<4> Includes the https://debezium.io/docs/connectors/mysql/#change-events-value[Change Event Value] schema in the `SourceRecord` events.
+<5> Enables the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering].
 
 You can run also the `CdcSourceIntegrationTests#CdcPostgresTests` using this mysql configuration.
 
 ==== MongoDB
 
+TODO
+
 ==== Oracle (incubator)
+
+TODO
 
 ==== SQL Server (incubator)
 
+TODO
 
 == Examples
 
