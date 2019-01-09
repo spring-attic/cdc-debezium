@@ -43,7 +43,7 @@ public class CdcCommonProperties {
 	 * Spring pass-trough wrapper for the debezium configuration properties. All properties with 'cdc.config' prefix
 	 * are converted into Debezium io.debezium.config.Configuration and the prefix is dropped.
 	 */
-	private Map<String, String> config = new HashMap<>();
+	private Map<String, String> config = defaultConfig();
 
 	/**
 	 * https://debezium.io/docs/configuration/event-flattening
@@ -123,5 +123,12 @@ public class CdcCommonProperties {
 
 	public void setIncludeSchema(boolean includeSchema) {
 		this.includeSchema = includeSchema;
+	}
+
+	private Map<String, String> defaultConfig() {
+		Map<String, String> defaultConfig = new HashMap<>();
+		defaultConfig.put("database.history", "io.debezium.relational.history.MemoryDatabaseHistory");
+		defaultConfig.put("offset.flush.interval.ms", "60000");
+		return defaultConfig;
 	}
 }

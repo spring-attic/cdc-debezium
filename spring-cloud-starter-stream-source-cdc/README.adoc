@@ -63,21 +63,27 @@ Use following properties to connect the CDC Source to the MySQL DB:
 
 [source]
 ----
-cdc.config.connector.class=io.debezium.connector.mysql.MySqlConnector # <1>
+cdc.config.offset.flush.interval.ms=60000 # <1>
+cdc.config.name=my-sql-connector # <1>
+cdc.config.server.id=85744 # <1>
+cdc.config.database.server.name=my-app-connector # <1>
 
-cdc.config.database.user=debezium  # <2>
-cdc.config.database.password=dbz # <2>
-cdc.config.database.hostname=localhost # <2>
-cdc.config.database.port=3306 # <2>
+cdc.config.connector.class=io.debezium.connector.mysql.MySqlConnector # <2>
 
-cdc.includeSchema=true # <3>
-cdc.filtering.enabled=true # <4>
+cdc.config.database.user=debezium  # <3>
+cdc.config.database.password=dbz # <3>
+cdc.config.database.hostname=localhost # <3>
+cdc.config.database.port=3306 # <3>
+
+cdc.includeSchema=true # <4>
+cdc.filtering.enabled=true # <5>
 ----
 
-<1> Required property that configures the CDC Source to use `MySqlConnector`.
-<2> Required properties to connection to the MySql on `localhost:3306` as `debezium`.
-<3> Includes the https://debezium.io/docs/connectors/mysql/#change-events-value[Change Event Value] schema in the `SourceRecord` events.
-<4> Enables the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering].
+<1> [required] Provide the metadata used to identify and dispatch the incoming messages.
+<2> [required] Configures the CDC Source to use https://debezium.io/docs/connectors/mysql/[MySqlConnector].
+<3> [required] Connection to the MySQL server running on `localhost:3306` as `debezium` user.
+<4> [optional] Includes the https://debezium.io/docs/connectors/mysql/#change-events-value[Change Event Value] schema in the `SourceRecord` events.
+<5> [optional] Enables the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering].
 
 You can run also the `CdcSourceIntegrationTests#CdcMysqlTests` using this mysql configuration.
 
@@ -102,13 +108,10 @@ Use following properties to connect the CDC Source to the PostgreSQL:
 
 [source]
 ----
-cdc.config.offset.flush.interval.ms=60000
-cdc.config.name=my-sql-connector
-cdc.config.server.id=85744
-
-cdc.config.database.server.name=my-app-connector
-
-cdc.config.database.history=io.debezium.relational.history.MemoryDatabaseHistory <1>
+cdc.config.offset.flush.interval.ms=60000 # <1>
+cdc.config.name=my-sql-connector # <1>
+cdc.config.server.id=85744 # <1>
+cdc.config.database.server.name=my-app-connector # <1>
 
 cdc.config.connector.class=io.debezium.connector.postgresql.PostgresConnector # <2>
 
@@ -122,10 +125,11 @@ cdc.includeSchema=true # <4>
 cdc.filtering.enabled=true # <5>
 ----
 
-<2> Required property that configures the CDC Source to use `PostgresConnector`.
-<3> Required properties to connection to the PostgreSQL on `localhost:5432` as `postgres` user.
-<4> Includes the https://debezium.io/docs/connectors/mysql/#change-events-value[Change Event Value] schema in the `SourceRecord` events.
-<5> Enables the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering].
+<1> [required] Provide the metadata used to identify and dispatch the incoming messages.
+<2> [required] Configures the CDC Source to use https://debezium.io/docs/connectors/postgresql/[PostgresConnector].
+<3> [required] Connection to the PostgreSQL server running on `localhost:5432` as `postgres` user.
+<4> [optional] Includes the https://debezium.io/docs/connectors/mysql/#change-events-value[Change Event Value] schema in the `SourceRecord` events.
+<5> [optional] Enables the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering].
 
 You can run also the `CdcSourceIntegrationTests#CdcPostgresTests` using this mysql configuration.
 

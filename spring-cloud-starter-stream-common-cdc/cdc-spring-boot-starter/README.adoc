@@ -42,11 +42,8 @@ All Debezium connector properties supported. Just prefix those properties with `
 Following snipped shows how to configure the https://debezium.io/docs/connectors/mysql/[MySqlConnector] for MySQL database running on localhost:3306
 [source]
 ----
-cdc.config.offset.flush.interval.ms=60000
 cdc.config.name=my-sql-connector
 cdc.config.server.id=85744
-
-cdc.config.database.history=io.debezium.relational.history.MemoryDatabaseHistory
 cdc.config.database.server.name=my-app-connector
 
 cdc.config.connector.class=io.debezium.connector.mysql.MySqlConnector
