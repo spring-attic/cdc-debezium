@@ -1,5 +1,8 @@
 # Spring Cloud Stream CDC Applications
 
+Set of applications that leverage the https://debezium.io[Debezium] to provide https://en.wikipedia.org/wiki/Change_data_capture[Change Data Capture] (CDC) capabilities for capturing and streaming and processing database changes.
+Provides support for database stores such as: `MySQL`, `PostgreSQL`, `MongoDB`, `Oracle` and `SQL Server`.
+
 ---
 
 ### cdc source
@@ -11,7 +14,7 @@ include::spring-cloud-starter-stream-source-cdc/README.adoc[]
 
 ### cdc spring boot starter
 
-*Description*: Convenience starter for https://debezium.io[Debezium] integrating  in Spring Boot applications.
+*Description*: Spring Boot Starter for easy integration of https://debezium.io[Debezium] in Spring Boot applications.
 
 include::spring-cloud-starter-stream-common-cdc/cdc-spring-boot-starter/README.adoc[]
 ---
