@@ -18,6 +18,9 @@ package org.springframework.cloud.stream.app.cdc.common.core;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.NotNull;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -44,6 +47,48 @@ public class CdcCommonProperties {
 	 * are converted into Debezium io.debezium.config.Configuration and the prefix is dropped.
 	 */
 	private Map<String, String> config = defaultConfig();
+
+	public enum OffsetStorageType {
+		memory("org.apache.kafka.connect.storage.MemoryOffsetBackingStore"),
+		file("org.apache.kafka.connect.storage.FileOffsetBackingStore"),
+		kafka("org.apache.kafka.connect.storage.KafkaOffsetBackingStore"),
+		metadata("org.springframework.cloud.stream.app.cdc.common.core.store.MetadataStoreOffsetBackingStore");
+
+		public final String offsetStorageClass;
+
+		OffsetStorageType(String type) {
+			this.offsetStorageClass = type;
+		}
+	}
+
+	/**
+	 * When a Kafka Connect connector runs, it reads information from the source and periodically records "offsets"
+	 * that define how much of that information it has processed. Should the connector be restarted, it will use the
+	 * last recorded offset to know where in the source information it should resume reading.
+	 */
+	private OffsetStorageType offsetStorage = OffsetStorageType.metadata;
+
+
+	public enum ConnectorType {
+		mysql("io.debezium.connector.mysql.MySqlConnector"),
+		postgres("io.debezium.connector.postgresql.PostgresConnector"),
+		mongodb("io.debezium.connector.mongodb.MongodbSourceConnector"),
+		oracle("io.debezium.connector.oracle.OracleConnector"),
+		sqlserver("io.debezium.connector.sqlserver.SqlServerConnector");
+
+		public final String connectorClass;
+
+		ConnectorType(String type) {
+			this.connectorClass = type;
+		}
+	}
+
+	/**
+	 * Shortcut for the cdc.config.connector.class property. Either of those can be used as long as they do not
+	 * contradict with each other.
+	 */
+	@NotNull
+	private ConnectorType connector = null;
 
 	/**
 	 * https://debezium.io/docs/configuration/event-flattening
@@ -130,5 +175,26 @@ public class CdcCommonProperties {
 		defaultConfig.put("database.history", "io.debezium.relational.history.MemoryDatabaseHistory");
 		defaultConfig.put("offset.flush.interval.ms", "60000");
 		return defaultConfig;
+	}
+
+	public OffsetStorageType getOffsetStorage() {
+		return offsetStorage;
+	}
+
+	public void setOffsetStorage(OffsetStorageType offsetStorage) {
+		this.offsetStorage = offsetStorage;
+	}
+
+	public ConnectorType getConnector() {
+		return connector;
+	}
+
+	public void setConnector(ConnectorType connector) {
+		this.connector = connector;
+	}
+
+	@AssertTrue
+	public boolean connectorIsSet() {
+		return this.getConnector() != null || this.getConfig().containsKey("connector.class");
 	}
 }

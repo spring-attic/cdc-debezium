@@ -23,6 +23,7 @@ import io.debezium.connector.sqlserver.SqlServerConnector;
 import org.apache.kafka.connect.source.SourceConnector;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -35,8 +36,8 @@ import org.springframework.context.annotation.Configuration;
 public class CdcConnectorConfiguration {
 
 	@ConditionalOnClass(MySqlConnector.class)
-	@ConditionalOnProperty(name = "cdc.config.connector.class",
-			havingValue = "io.debezium.connector.mysql.MySqlConnector")
+	@ConditionalOnExpression("'${cdc.config.connector.class}'.equalsIgnoreCase('io.debezium.connector.mysql.MySqlConnector') " +
+			"or '${cdc.connector}'.equalsIgnoreCase('mysql')")
 	public static class MySqlSourceConnector {
 		@Bean
 		@ConditionalOnMissingBean
@@ -46,8 +47,8 @@ public class CdcConnectorConfiguration {
 	}
 
 	@ConditionalOnClass(PostgresConnector.class)
-	@ConditionalOnProperty(name = "cdc.config.connector.class",
-			havingValue = "io.debezium.connector.postgresql.PostgresConnector")
+	@ConditionalOnExpression("'${cdc.config.connector.class}'.equalsIgnoreCase('io.debezium.connector.postgresql.PostgresConnector') " +
+			"or '${cdc.connector}'.equalsIgnoreCase('postgres')")
 	public static class PostgresSourceConnector {
 		@Bean
 		@ConditionalOnMissingBean
@@ -57,8 +58,8 @@ public class CdcConnectorConfiguration {
 	}
 
 	@ConditionalOnClass(MongoDbConnector.class)
-	@ConditionalOnProperty(name = "cdc.config.connector.class",
-			havingValue = "io.debezium.connector.mongodb.MongodbSourceConnector")
+	@ConditionalOnExpression("'${cdc.config.connector.class}'.equalsIgnoreCase('io.debezium.connector.mongodb.MongodbSourceConnector') " +
+			"or '${cdc.connector}'.equalsIgnoreCase('mongodb')")
 	public static class MongodbSourceConnector {
 		@Bean
 		@ConditionalOnMissingBean
@@ -68,8 +69,8 @@ public class CdcConnectorConfiguration {
 	}
 
 	@ConditionalOnClass(OracleConnector.class)
-	@ConditionalOnProperty(name = "cdc.config.connector.class",
-			havingValue = "io.debezium.connector.oracle.OracleConnector")
+	@ConditionalOnExpression("'${cdc.config.connector.class}'.equalsIgnoreCase('io.debezium.connector.oracle.OracleConnector') " +
+			"or '${cdc.connector}'.equalsIgnoreCase('oracle')")
 	public static class OracleSourceConnector {
 		@Bean
 		@ConditionalOnMissingBean
@@ -79,8 +80,8 @@ public class CdcConnectorConfiguration {
 	}
 
 	@ConditionalOnClass(SqlServerConnector.class)
-	@ConditionalOnProperty(name = "cdc.config.connector.class",
-			havingValue = "io.debezium.connector.sqlserver.SqlServerConnector")
+	@ConditionalOnExpression("'${cdc.config.connector.class}'.equalsIgnoreCase('io.debezium.connector.sqlserver.SqlServerConnector') " +
+			"or '${cdc.connector}'.equalsIgnoreCase('sqlserver')")
 	public static class SqlServerSourceConnector {
 		@Bean
 		@ConditionalOnMissingBean

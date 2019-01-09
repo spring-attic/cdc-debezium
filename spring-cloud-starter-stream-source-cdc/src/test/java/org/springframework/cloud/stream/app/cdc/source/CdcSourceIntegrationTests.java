@@ -60,7 +60,9 @@ public abstract class CdcSourceIntegrationTests {
 	protected MessageCollector messageCollector;
 
 	@TestPropertySource(properties = {
-			"cdc.config.connector.class=io.debezium.connector.mysql.MySqlConnector",
+			//"cdc.config.connector.class=io.debezium.connector.mysql.MySqlConnector",
+			"cdc.connector=mysql",
+
 			"cdc.config.database.user=debezium",
 			"cdc.config.database.password=dbz",
 			"cdc.config.database.hostname=localhost",
@@ -86,7 +88,9 @@ public abstract class CdcSourceIntegrationTests {
 	}
 
 	@TestPropertySource(properties = {
-			"cdc.config.connector.class=io.debezium.connector.postgresql.PostgresConnector",
+//			"cdc.config.connector.class=io.debezium.connector.postgresql.PostgresConnector",
+			"cdc.connector=postgres",
+
 			"cdc.config.database.user=postgres",
 			"cdc.config.database.password=postgres",
 

@@ -85,6 +85,25 @@ public class CdcCommonConfiguration {
 	public SpringEmbeddedEngine.Builder embeddedEngineBuilder(CdcCommonProperties properties,
 			SourceConnector sourceConnector, OffsetBackingStore offsetBackingStore) {
 
+		if (!properties.getConfig().containsKey("offset.storage")) {
+			properties.getConfig().put("offset.storage", properties.getOffsetStorage().offsetStorageClass);
+		}
+		else {
+			if (!properties.getOffsetStorage().offsetStorageClass.equalsIgnoreCase(properties.getConfig().get("offset.storage"))) {
+				logger.warn("offset.storage property mismatch!" + properties.getOffsetStorage().offsetStorageClass
+						+ " vs. " + properties.getConfig().get("offset.storage"));
+			}
+		}
+		if (!properties.getConfig().containsKey("connector.class")) {
+			properties.getConfig().put("connector.class", properties.getConnector().connectorClass);
+		}
+		else {
+			if (!properties.getConnector().connectorClass.equalsIgnoreCase(properties.getConfig().get("connector.class"))) {
+				logger.warn("connector property mismatch!" + properties.getConnector().connectorClass
+						+ " vs. " + properties.getConfig().get("connector.class"));
+			}
+		}
+
 		return SpringEmbeddedEngine.create()
 				.using(io.debezium.config.Configuration.from(properties.getConfig()))
 				.sourceConnector(sourceConnector)

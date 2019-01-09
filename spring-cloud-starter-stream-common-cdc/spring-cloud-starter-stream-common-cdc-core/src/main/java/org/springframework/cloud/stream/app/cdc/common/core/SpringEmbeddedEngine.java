@@ -152,7 +152,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 			.withValidation(Field::isPositiveInteger);
 
 	public static final Field OFFSET_COMMIT_POLICY = Field.create("offset.commit.policy")
-			.withDescription("The fully-qualified class name of the commit policy type. This class must implement the interface "
+			.withDescription("The fully-qualified class name of the commit policy offsetStorageClass. This class must implement the interface "
 					+ OffsetCommitPolicy.class.getName()
 					+ ". The default is a periodic commity policy based upon time intervals.")
 			.withDefault(OffsetCommitPolicy.PeriodicCommitOffsetPolicy.class.getName())
