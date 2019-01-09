@@ -56,7 +56,11 @@ cdc-stream= TODO
 
 == Testing
 
-To run the integration tests in `CdcSourceIntegrationTests` you need to start the source's database Docker container as explained below:
+The `CDC Source` is based on Debezium, which currently support the following five datastores: `MySQL`, `PostgreSQL`, `MongoDB`, `Oracle` and `SQL Server` databases.
+
+In order to run the `CdcSourceIntegrationTests` integration tests you need to configure source required source databases.
+
+Instructions below explains how to run pre-configured test databases form Docker images.
 
 ==== MySQL
 
@@ -91,12 +95,52 @@ cdc.filtering.enabled=true # <4>
 
 <1> Required property that configures the CDC Source to use `MySqlConnector`.
 <2> Required properties to connection to the MySql on `localhost:3306` as `debezium`.
-<3> When `true` includes the https://debezium.io/docs/connectors/mysql/#change-events-value[Change Event Value] schema.
+<3> Includes the https://debezium.io/docs/connectors/mysql/#change-events-value[Change Event Value] schema in the `SourceRecord` events.
 <4> Enables the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering].
 
 You can run also the `CdcSourceIntegrationTests#CdcMysqlTests` using this mysql configuration.
 
 ==== PostgreSQL
+
+psql -U postgres -h localhost -p 5432
+
+
+Start a pre-configured postgres server from the `debezium/example-postgres:0.8` Docker image:
+[source, bash]
+----
+docker run -it --rm --name postgres -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres debezium/example-postgres:0.8
+----
+
+You can connect to this server like this:
+[source, bash]
+----
+psql -U postgres -h localhost -p 5432
+----
+
+Use following properties to connect the CDC Source to the PostgreSQL:
+
+[source]
+----
+cdc.config.connector.class=io.debezium.connector.postgresql.PostgresConnector # <1>
+
+cdc.config.database.user=postgres  # <2>
+cdc.config.database.password=postgres # <2>
+cdc.config.database..dbname=postgres # <2>
+cdc.config.database.hostname=localhost # <2>
+cdc.config.database.port=5432 # <2>
+
+cdc.includeSchema=true # <3>
+
+cdc.filtering.enabled=true # <4>
+----
+
+<1> Required property that configures the CDC Source to use `PostgresConnector`.
+<2> Required properties to connection to the PostgreSQL on `localhost:5432` as `postgres` user.
+<3> Includes the https://debezium.io/docs/connectors/mysql/#change-events-value[Change Event Value] schema in the `SourceRecord` events.
+<4> Enables the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering].
+
+You can run also the `CdcSourceIntegrationTests#CdcPostgresTests` using this mysql configuration.
+
 
 ==== MongoDB
 
