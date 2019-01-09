@@ -6,12 +6,6 @@ Currently it supports `MySQL`, `PostgreSQL`, `MongoDB`, `Oracle` and `SQL Server
 
 It wraps and builds upon the https://debezium.io/docs/embedded/[Debezium Embedded Connector] and provides streaming database changes over arbitrary message binders and thus not be limited to Kafka as the only broker.
 
-Setting `cdc.filtering.enabled` to true enables the https://debezium.io/docs/configuration/event-flattening[Event Flattening].
-
-cdc.include-schema
-
-
-
 == Options
 
 //tag::configuration-properties[]
@@ -40,18 +34,6 @@ $ cd apps
 and build all binder projects
 ```
 $ ./mvnw clean package
-```
-
-== Examples
-
-```
-java -jar cdc-source.jar ... use the properties TODO
-```
-
-And here is a example pipeline that uses cdc:
-
-```
-cdc-stream= TODO
 ```
 
 == Testing
@@ -89,7 +71,6 @@ cdc.config.database.hostname=localhost # <2>
 cdc.config.database.port=3306 # <2>
 
 cdc.includeSchema=true # <3>
-
 cdc.filtering.enabled=true # <4>
 ----
 
@@ -130,7 +111,6 @@ cdc.config.database.hostname=localhost # <2>
 cdc.config.database.port=5432 # <2>
 
 cdc.includeSchema=true # <3>
-
 cdc.filtering.enabled=true # <4>
 ----
 
@@ -141,9 +121,21 @@ cdc.filtering.enabled=true # <4>
 
 You can run also the `CdcSourceIntegrationTests#CdcPostgresTests` using this mysql configuration.
 
-
 ==== MongoDB
 
-==== Oracle
+==== Oracle (incubator)
 
-==== SQL Server
+==== SQL Server (incubator)
+
+
+== Examples
+
+```
+java -jar cdc-source.jar ... use the properties TODO
+```
+
+And here is a example pipeline that uses cdc:
+
+```
+cdc-stream= TODO
+```
