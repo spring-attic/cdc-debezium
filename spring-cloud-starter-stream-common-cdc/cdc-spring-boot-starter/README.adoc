@@ -18,9 +18,11 @@ https://start.spring.io/[Start new Spring Boot project] and add the following st
     </dependency>
 ----
 
-Starter setups an embedded https://debezium.io[Debezium Connector] to capture the database changes.
+NOTE: for MySQL you need to downgrade the mysql client version to `mysql:mysql-connector-java:5.1.46`.
 
-Implement a `Consumer<SourceRecord>` bean handler to receive and process the CDC notifications:
+The CDC starter setups an embedded https://debezium.io[Debezium Connector] to capture the database changes.
+
+Then implement a `Consumer<SourceRecord>` bean handler to receive and process the CDC notifications:
 
 [source, java]
 ----
