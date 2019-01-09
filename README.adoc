@@ -15,7 +15,8 @@ include::spring-cloud-starter-stream-source-cdc/README.adoc[]
 ### CDC Spring Boot Starter
 
 *Description*: Spring Boot Starter for easy integration of https://debezium.io[Debezium] in Spring Boot applications.
-To use it you just add the `cdc-spring-boot-starter` dependency to your application POM and implement your own `Consumer<SourceRecord>` handler to process the incoming database change events.
+
+To use it you just add the `cdc-spring-boot-starter` dependency to your application POM and implement your own `Consumer<SourceRecord>` handler to process the incoming database change events. Follow the link below for further instructions.
 
 include::spring-cloud-starter-stream-common-cdc/cdc-spring-boot-starter/README.adoc[]
 
