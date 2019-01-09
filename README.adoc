@@ -1,0 +1,15 @@
+# Spring Cloud Stream CDC Applications
+
+---
+
+### cdc source
+*Description*: TODO
+
+include::spring-cloud-starter-stream-source-cdc/README.adoc[]
+
+---
+
+### cdc spring boot starter
+
+include::spring-cloud-starter-stream-common-cdc/cdc-spring-boot-starter/README.adoc[]
+---

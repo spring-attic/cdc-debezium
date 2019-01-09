@@ -1,0 +1,55 @@
+//tag::ref-doc[]
+= CDC Source
+
+https://en.wikipedia.org/wiki/Change_data_capture[Change Data Capture] (CDC) `source` that captures and streams change events from multiple databases.
+Currently it supports `MySQL`, `PostgreSQL`, `MongoDB`, `Oracle` and `SQL Server` databases.
+
+It wraps and builds upon the https://debezium.io/docs/embedded/[Debezium Embedded Connector] and provides streaming database changes over arbitrary message binders and thus not be limited to Kafka as the only broker.
+
+Setting `cdc.filtering.enabled` to true enables the https://debezium.io/docs/configuration/event-flattening[Event Flattening].
+
+cdc.include-schema
+
+
+
+== Options
+
+//tag::configuration-properties[]
+$$cdc.config$$:: $$Spring pass-trough wrapper for the debezium configuration properties. All properties with 'cdc.config' prefix are converted into Debezium io.debezium.config.Configuration and the prefix is dropped.$$ *($$Map<String, String>$$, default: `$$<none>$$`)*
+$$cdc.flattering.delete-handling-mode$$:: $$How to handle delete records. Options are: (1) none - records are passed, (2) drop - records are removed and (3) rewrite - adds '__deleted' field to the records.$$ *($$DeleteHandlingMode$$, default: `$$<none>$$`)*
+$$cdc.flattering.drop-deletes$$:: $$Drop delete records converted to tombstones records if a processing connector cannot process them or a compaction is undesirable.$$ *($$Boolean$$, default: `$$false$$`)*
+$$cdc.flattering.drop-tombstones$$:: $$Debezium by default generates a tombstone record to enable Kafka compaction after a delete record was generated. This record is usually filtered out to avoid duplicates as a delete record is converted to a tombstone record, too.$$ *($$Boolean$$, default: `$$true$$`)*
+$$cdc.flattering.enabled$$:: $$Enable flattering the source record events (https://debezium.io/docs/configuration/event-flattening).$$ *($$Boolean$$, default: `$$false$$`)*
+$$cdc.include-schema$$:: $$If true the value's schema is included in the outbound message.$$ *($$Boolean$$, default: `$$false$$`)*
+//end::configuration-properties[]
+
+//end::ref-doc[]
+
+== Build
+
+Build involves two-stages. First build the apps and generate the binder specific app starters projects:
+```
+$ ./mvnw clean install -PgenerateApps
+```
+
+You can find the corresponding binder based projects in the `apps` subfolder. You can then cd into the apps folder:
+
+```
+$ cd apps
+```
+and build all binder projects
+```
+$ ./mvnw clean package
+```
+
+== Examples
+
+```
+java -jar cdc-source.jar ... use the properties TODO
+```
+
+And here is a example pipeline that uses cdc:
+
+```
+cdc-stream= TODO
+```
