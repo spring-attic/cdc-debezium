@@ -79,11 +79,11 @@ cdc.includeSchema=true # <4>
 cdc.filtering.enabled=true # <5>
 ----
 
-<1> [required] Provide the metadata used to identify and dispatch the incoming messages.
-<2> [required] Configures the CDC Source to use https://debezium.io/docs/connectors/mysql/[MySqlConnector].
-<3> [required] Connection to the MySQL server running on `localhost:3306` as `debezium` user.
-<4> [optional] Includes the https://debezium.io/docs/connectors/mysql/#change-events-value[Change Event Value] schema in the `SourceRecord` events.
-<5> [optional] Enables the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering].
+<1> Metadata used to identify and dispatch the incoming events.
+<2> Configures the CDC Source to use https://debezium.io/docs/connectors/mysql/[MySqlConnector].
+<3> Connection to the MySQL server running on `localhost:3306` as `debezium` user.
+<4> Includes the https://debezium.io/docs/connectors/mysql/#change-events-value[Change Event Value] schema in the `SourceRecord` events.
+<5> Enables the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering].
 
 You can run also the `CdcSourceIntegrationTests#CdcMysqlTests` using this mysql configuration.
 
@@ -125,11 +125,11 @@ cdc.includeSchema=true # <4>
 cdc.filtering.enabled=true # <5>
 ----
 
-<1> [required] Provide the metadata used to identify and dispatch the incoming messages.
-<2> [required] Configures the CDC Source to use https://debezium.io/docs/connectors/postgresql/[PostgresConnector].
-<3> [required] Connection to the PostgreSQL server running on `localhost:5432` as `postgres` user.
-<4> [optional] Includes the https://debezium.io/docs/connectors/mysql/#change-events-value[Change Event Value] schema in the `SourceRecord` events.
-<5> [optional] Enables the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering].
+<1> Metadata used to identify and dispatch the incoming events.
+<2> Configures the CDC Source to use https://debezium.io/docs/connectors/postgresql/[PostgresConnector].
+<3> Connection to the PostgreSQL server running on `localhost:5432` as `postgres` user.
+<4> Includes the https://debezium.io/docs/connectors/mysql/#change-events-value[Change Event Value] schema in the `SourceRecord` events.
+<5> Enables the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering].
 
 You can run also the `CdcSourceIntegrationTests#CdcPostgresTests` using this mysql configuration.
 
