@@ -71,7 +71,7 @@ public class CdcCommonConfiguration {
 	@ConditionalOnMissingBean
 	public JsonConverter jsonConverter(CdcCommonProperties properties) {
 		JsonConverter jsonConverter = new JsonConverter();
-		jsonConverter.configure(Collections.singletonMap("schemas.enable", properties.isIncludeSchema()), false);
+		jsonConverter.configure(Collections.singletonMap("schemas.enable", properties.isSchema()), false);
 		return jsonConverter;
 	}
 

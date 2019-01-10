@@ -42,13 +42,14 @@ import org.springframework.test.context.junit4.SpringRunner;
 @SpringBootTest(
 		webEnvironment = SpringBootTest.WebEnvironment.NONE,
 		properties = {
-				"cdc.config.offset.flush.interval.ms=60000",
 				"cdc.config.name=my-sql-connector",
-				"cdc.config.server.id=85744",
-				"cdc.config.database.history=io.debezium.relational.history.MemoryDatabaseHistory",
-				"cdc.config.database.server.name=my-app-connector",
 
-				"cdc.includeSchema=false",
+				"cdc.config.offset.flush.interval.ms=60000",
+
+
+				"cdc.config.database.history=io.debezium.relational.history.MemoryDatabaseHistory",
+
+				"cdc.schema=false",
 		})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public abstract class CdcSourceIntegrationTests {
@@ -69,7 +70,10 @@ public abstract class CdcSourceIntegrationTests {
 			"cdc.config.database.hostname=localhost",
 			"cdc.config.database.port=3306",
 
-			"cdc.includeSchema=false",
+			"cdc.config.server.id=85744",
+			"cdc.config.database.server.name=my-app-connector",
+
+			"cdc.schema=false",
 
 			"cdc.flattering.enabled=true",
 	})
@@ -89,7 +93,7 @@ public abstract class CdcSourceIntegrationTests {
 	}
 
 	@TestPropertySource(properties = {
-//			"cdc.config.connector.class=io.debezium.connector.postgresql.PostgresConnector",
+			// "cdc.config.connector.class=io.debezium.connector.postgresql.PostgresConnector",
 			"cdc.connector=postgres",
 
 			"cdc.config.database.user=postgres",
@@ -97,7 +101,9 @@ public abstract class CdcSourceIntegrationTests {
 
 			"cdc.config.database.dbname=postgres",
 			"cdc.config.database.hostname=localhost",
-			"cdc.config.database.port=5432"
+			"cdc.config.database.port=5432",
+
+			"cdc.config.database.server.name=my-app-connector",
 	})
 	public static class CdcPostgresTests extends CdcSourceIntegrationTests {
 
@@ -115,7 +121,8 @@ public abstract class CdcSourceIntegrationTests {
 	}
 
 	@TestPropertySource(properties = {
-			"cdc.config.connector.class=io.debezium.connector.sqlserver.SqlServerConnector",
+			//"cdc.config.connector.class=io.debezium.connector.sqlserver.SqlServerConnector",
+			"cdc.connector=sqlserver",
 			"cdc.config.database.user=Standard",
 			"cdc.config.database.password=Password!",
 
@@ -138,11 +145,35 @@ public abstract class CdcSourceIntegrationTests {
 		}
 	}
 
+	@TestPropertySource(properties = {
+			"cdc.connector=mongodb",
+
+			"cdc.config.tasks.max=1",
+			"cdc.config.mongodb.hosts=rs0/localhost:27017",
+			"cdc.config.mongodb.name=dbserver1",
+			"cdc.config.mongodb.user=debezium",
+			"cdc.config.mongodb.password=dbz",
+			"cdc.config.database.whitelist=inventory",
+	})
+	public static class CdcSqlMongoDbTests extends CdcSourceIntegrationTests {
+
+		@Test
+		public void testOne() throws InterruptedException {
+
+			Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+			Assert.assertNotNull(received);
+
+			do {
+				received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+			} while (received != null);
+
+		}
+	}
+
 	@SpringBootConfiguration
 	@EnableAutoConfiguration
 	@Import(CdcSourceConfiguration.class)
 	public static class TestCdcSourceApplication {
 
 	}
-
 }

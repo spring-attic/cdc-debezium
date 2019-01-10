@@ -11,12 +11,12 @@ It wraps and builds upon the https://debezium.io/docs/embedded/[Debezium Embedde
 //tag::configuration-properties[]
 $$cdc.config$$:: $$Spring pass-trough wrapper for the debezium configuration properties. All properties with 'cdc.config' prefix are converted into Debezium io.debezium.config.Configuration and the prefix is dropped.$$ *($$Map<String, String>$$, default: `$$<none>$$`)*
 $$cdc.connector$$:: $$Shortcut for the cdc.config.connector.class property. Either of those can be used as long as they do not contradict with each other.$$ *($$ConnectorType$$, default: `$$<none>$$`, possible values: `mysql`,`postgres`,`mongodb`,`oracle`,`sqlserver`)*
-$$cdc.flattering.delete-handling-mode$$:: $$How to handle delete records. Options are: (1) none - records are passed, (2) drop - records are removed and (3) rewrite - adds '__deleted' field to the records.$$ *($$DeleteHandlingMode$$, default: `$$<none>$$`)*
+$$cdc.flattering.delete-handling-mode$$:: $$How to handle delete records. Options are: (1) none - records are passed, (2) drop - records are removed and (3) rewrite - adds '__deleted' field to the records.$$ *($$DeleteHandlingMode$$, default: `$$<none>$$`, possible values: `none`,`drop`,`rewrite`)*
 $$cdc.flattering.drop-deletes$$:: $$Drop delete records converted to tombstones records if a processing connector cannot process them or a compaction is undesirable.$$ *($$Boolean$$, default: `$$false$$`)*
 $$cdc.flattering.drop-tombstones$$:: $$Debezium by default generates a tombstone record to enable Kafka compaction after a delete record was generated. This record is usually filtered out to avoid duplicates as a delete record is converted to a tombstone record, too.$$ *($$Boolean$$, default: `$$true$$`)*
 $$cdc.flattering.enabled$$:: $$Enable flattering the source record events (https://debezium.io/docs/configuration/event-flattening).$$ *($$Boolean$$, default: `$$false$$`)*
-$$cdc.include-schema$$:: $$If true the value's schema is included in the outbound message.$$ *($$Boolean$$, default: `$$false$$`)*
 $$cdc.offset-storage$$:: $$When a Kafka Connect connector runs, it reads information from the source and periodically records "offsets" that define how much of that information it has processed. Should the connector be restarted, it will use the last recorded offset to know where in the source information it should resume reading.$$ *($$OffsetStorageType$$, default: `$$<none>$$`, possible values: `memory`,`file`,`kafka`,`metadata`)*
+$$cdc.schema$$:: $$If set then the value's schema is included as part of the the outbound message.$$ *($$Boolean$$, default: `$$false$$`)*
 //end::configuration-properties[]
 
 //end::ref-doc[]
@@ -77,7 +77,7 @@ cdc.config.database.password=dbz # <3>
 cdc.config.database.hostname=localhost # <3>
 cdc.config.database.port=3306 # <3>
 
-cdc.includeSchema=true # <4>
+cdc.schema=true # <4>
 cdc.flattering.enabled=true # <5>
 ----
 <1> Configures the CDC Source to use https://debezium.io/docs/connectors/mysql/[MySqlConnector]. (equivalent to setting `cdc.config.connector.class=io.debezium.connector.mysql.MySqlConnector`).
@@ -89,9 +89,6 @@ cdc.flattering.enabled=true # <5>
 You can run also the `CdcSourceIntegrationTests#CdcMysqlTests` using this mysql configuration.
 
 ==== PostgreSQL
-
-psql -U postgres -h localhost -p 5432
-
 
 Start a pre-configured postgres server from the `debezium/example-postgres:0.8` Docker image:
 [source, bash]
@@ -123,7 +120,7 @@ cdc.config.database..dbname=postgres # <4>
 cdc.config.database.hostname=localhost # <4>
 cdc.config.database.port=5432 # <4>
 
-cdc.includeSchema=true # <5>
+cdc.schema=true # <5>
 cdc.flattering.enabled=true # <6>
 ----
 
@@ -138,7 +135,54 @@ You can run also the `CdcSourceIntegrationTests#CdcPostgresTests` using this mys
 
 ==== MongoDB
 
-TODO
+Start a pre-configured mongodb from the `debezium/example-mongodb:0.8` Docker image:
+[source, bash]
+----
+docker run -it --rm --name mongodb -p 27017:27017 -e MONGODB_USER=debezium -e MONGODB_PASSWORD=dbz  debezium/example-mongodb:0.8
+----
+
+Initialize the inventory collections
+[source, bash]
+----
+docker exec -it mongodb sh -c 'bash -c /usr/local/bin/init-inventory.sh'
+----
+
+In the `mongodb` terminal output, search for a log entry like `host: "3f95a8a6516e:27017"` :
+[source, bash]
+----
+2019-01-10T13:46:10.004+0000 I COMMAND  [conn1] command local.oplog.rs appName: "MongoDB Shell" command: replSetInitiate { replSetInitiate: { _id: "rs0", members: [ { _id: 0.0, host: "3f95a8a6516e:27017" } ] }, lsid: { id: UUID("5f477a16-d80d-41f2-9ab4-4ebecea46773") }, $db: "admin" } numYields:0 reslen:22 locks:{ Global: { acquireCount: { r: 36, w: 20, W: 2 }, acquireWaitCount: { W: 1 }, timeAcquiringMicros: { W: 312 } }, Database: { acquireCount: { r: 6, w: 4, W: 16 } }, Collection: { acquireCount: { r: 4, w: 2 } }, oplog: { acquireCount: { r: 2, w: 3 } } } protocol:op_msg 988ms
+----
+
+Add `127.0.0.1    3f95a8a6516e` entry to your `/etc/hosts`
+
+
+Use following properties to connect the CDC Source to the MongoDB:
+
+[source]
+----
+cdc.connector=mongodb # <1>
+cdc.offsetStorage=memory #<2>
+
+cdc.config.mongodb.hosts=rs0/localhost:27017 # <3>
+cdc.config.mongodb.name=dbserver1 # <3>
+cdc.config.mongodb.user=debezium # <3>
+cdc.config.mongodb.password=dbz # <3>
+cdc.config.database.whitelist=inventory # <3>
+
+cdc.config.tasks.max=1 # <4>
+
+cdc.schema=true # <5>
+cdc.flattering.enabled=true # <6>
+----
+
+<1> Configures `CDC Source` to use https://debezium.io/docs/connectors/mongodb/[MongoDB Connector]. This maps into `cdc.config.connector.class=io.debezium.connector.mongodb.MongodbSourceConnector`.
+<2> Configures the Debezium engine to use `memory` (e.g. `cdc.config.offset.storage=org.apache.kafka.connect.storage.MemoryOffsetBackingStore) backing offset store.
+<3> Connection to the MongoDB running on `localhost:27017` as `debezium` user.
+<4> https://debezium.io/docs/connectors/mongodb/#tasks
+<5> Includes the https://debezium.io/docs/connectors/mysql/#change-events-value[Change Event Value] schema in the `SourceRecord` events.
+<6> Enables the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering].
+
+You can run also the `CdcSourceIntegrationTests#CdcPostgresTests` using this mysql configuration.
 
 ==== Oracle (incubator)
 

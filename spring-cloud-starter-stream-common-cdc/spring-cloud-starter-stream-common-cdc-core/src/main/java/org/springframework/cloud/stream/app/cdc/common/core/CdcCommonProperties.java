@@ -33,9 +33,9 @@ import org.springframework.validation.annotation.Validated;
 public class CdcCommonProperties {
 
 	/**
-	 * If true the value's schema is included in the outbound message.
+	 * If set then the value's schema is included as part of the the outbound message.
 	 */
-	private boolean includeSchema = false;
+	private boolean schema = false;
 
 	/**
 	 * Event Flattering (https://debezium.io/docs/configuration/event-flattening)
@@ -89,12 +89,12 @@ public class CdcCommonProperties {
 		}
 	}
 
+	public enum DeleteHandlingMode {none, drop, rewrite}
+
 	/**
 	 * https://debezium.io/docs/configuration/event-flattening
 	 */
 	public static class Flattering {
-
-		public enum DeleteHandlingMode {none, drop, rewrite}
 
 		/**
 		 * Enable flattering the source record events (https://debezium.io/docs/configuration/event-flattening).
@@ -112,7 +112,6 @@ public class CdcCommonProperties {
 		 * compaction is undesirable.
 		 */
 		private boolean dropDeletes = false;
-
 
 		/**
 		 * How to handle delete records. Options are: (1) none - records are passed, (2) drop - records are removed and
@@ -161,12 +160,12 @@ public class CdcCommonProperties {
 		return config;
 	}
 
-	public boolean isIncludeSchema() {
-		return includeSchema;
+	public boolean isSchema() {
+		return schema;
 	}
 
-	public void setIncludeSchema(boolean includeSchema) {
-		this.includeSchema = includeSchema;
+	public void setSchema(boolean schema) {
+		this.schema = schema;
 	}
 
 	private Map<String, String> defaultConfig() {

@@ -53,7 +53,7 @@ cdc.config.database.password=dbz # <3>
 cdc.config.database.hostname=localhost # <3>
 cdc.config.database.port=3306 # <3>
 
-cdc.includeSchema=false # <4>
+cdc.schema=false # <4>
 
 cdc.flattering.enabled=true # <5>
 ----
