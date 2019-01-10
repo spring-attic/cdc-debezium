@@ -11,11 +11,11 @@ https://start.spring.io/[Start new Spring Boot project] and add the following st
 
 [source, xml]
 ----
-    <dependency>
-        <groupId>org.springframework.cloud.stream.app</groupId>
-        <artifactId>cdc-spring-boot-starter</artifactId>
-        <version>2.1.0.BUILD-SNAPSHOT</version>
-    </dependency>
+<dependency>
+    <groupId>org.springframework.cloud.stream.app</groupId>
+    <artifactId>cdc-spring-boot-starter</artifactId>
+    <version>2.1.0.BUILD-SNAPSHOT</version>
+</dependency>
 ----
 
 NOTE: for MySQL you need to downgrade the mysql client version to `mysql:mysql-connector-java:5.1.46`.
@@ -98,7 +98,7 @@ $$cdc.flattering.delete-handling-mode$$:: $$How to handle delete records. Option
 $$cdc.flattering.drop-deletes$$:: $$Drop delete records converted to tombstones records if a processing connector cannot process them or a compaction is undesirable.$$ *($$Boolean$$, default: `$$false$$`)*
 $$cdc.flattering.drop-tombstones$$:: $$Debezium by default generates a tombstone record to enable Kafka compaction after a delete record was generated. This record is usually filtered out to avoid duplicates as a delete record is converted to a tombstone record, too.$$ *($$Boolean$$, default: `$$true$$`)*
 $$cdc.flattering.enabled$$:: $$Enable flattering the source record events (https://debezium.io/docs/configuration/event-flattening).$$ *($$Boolean$$, default: `$$false$$`)*
-$$cdc.include-schema$$:: $$If true the value's schema is included in the outbound message.$$ *($$Boolean$$, default: `$$false$$`)*
+$$cdc.schema$$:: $$If true the value's schema is included in the outbound message.$$ *($$Boolean$$, default: `$$false$$`)*
 $$cdc.offset-storage$$:: $$When a Kafka Connect connector runs, it reads information from the source and periodically records "offsets" that define how much of that information it has processed. Should the connector be restarted, it will use the last recorded offset to know where in the source information it should resume reading.$$ *($$OffsetStorageType$$, default: `$$metadata$$`, possible values: `memory`,`file`,`kafka`,`metadata`)*
 //end::configuration-properties[]
 
