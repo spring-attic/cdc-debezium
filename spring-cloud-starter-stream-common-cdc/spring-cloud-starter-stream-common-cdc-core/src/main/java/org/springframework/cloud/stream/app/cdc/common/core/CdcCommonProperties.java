@@ -48,6 +48,20 @@ public class CdcCommonProperties {
 	 */
 	private Map<String, String> config = defaultConfig();
 
+	/**
+	 * When a Kafka Connect connector runs, it reads information from the source and periodically records "offsets"
+	 * that define how much of that information it has processed. Should the connector be restarted, it will use the
+	 * last recorded offset to know where in the source information it should resume reading.
+	 */
+	private OffsetStorageType offsetStorage = OffsetStorageType.metadata;
+
+	/**
+	 * Shortcut for the cdc.config.connector.class property. Either of those can be used as long as they do not
+	 * contradict with each other.
+	 */
+	@NotNull
+	private ConnectorType connector = null;
+
 	public enum OffsetStorageType {
 		memory("org.apache.kafka.connect.storage.MemoryOffsetBackingStore"),
 		file("org.apache.kafka.connect.storage.FileOffsetBackingStore"),
@@ -60,14 +74,6 @@ public class CdcCommonProperties {
 			this.offsetStorageClass = type;
 		}
 	}
-
-	/**
-	 * When a Kafka Connect connector runs, it reads information from the source and periodically records "offsets"
-	 * that define how much of that information it has processed. Should the connector be restarted, it will use the
-	 * last recorded offset to know where in the source information it should resume reading.
-	 */
-	private OffsetStorageType offsetStorage = OffsetStorageType.metadata;
-
 
 	public enum ConnectorType {
 		mysql("io.debezium.connector.mysql.MySqlConnector"),
@@ -82,13 +88,6 @@ public class CdcCommonProperties {
 			this.connectorClass = type;
 		}
 	}
-
-	/**
-	 * Shortcut for the cdc.config.connector.class property. Either of those can be used as long as they do not
-	 * contradict with each other.
-	 */
-	@NotNull
-	private ConnectorType connector = null;
 
 	/**
 	 * https://debezium.io/docs/configuration/event-flattening

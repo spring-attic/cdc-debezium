@@ -20,8 +20,8 @@ import org.apache.kafka.connect.storage.KafkaOffsetBackingStore;
 import org.apache.kafka.connect.storage.MemoryOffsetBackingStore;
 import org.apache.kafka.connect.storage.OffsetBackingStore;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.stream.app.cdc.common.core.store.MetadataStoreOffsetBackingStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,37 +33,34 @@ import org.springframework.integration.metadata.MetadataStore;
 @Configuration
 public class CdcOffsetBackingStoreConfiguration {
 
-	public static final String CDC_CONFIG_OFFSET_STORAGE = "cdc.config.offset.storage";
-
 	@Bean
 	@ConditionalOnMissingBean
-	@ConditionalOnProperty(name = CDC_CONFIG_OFFSET_STORAGE,
-			havingValue = "MetadataStoreOffsetBackingStore",
-			matchIfMissing = true)
+	@ConditionalOnExpression("'${cdc.config.offset.storage}'.equalsIgnoreCase('org.springframework.cloud.stream.app.cdc.common.core.store.MetadataStoreOffsetBackingStore') " +
+			"or '${cdc.offsetStorage:metadata}'.equals('metadata')")
 	public OffsetBackingStore metadataStoreOffsetBackingStore(MetadataStore metadataStore) {
 		return new MetadataStoreOffsetBackingStore(metadataStore);
 	}
 
 	@Bean
 	@ConditionalOnMissingBean
-	@ConditionalOnProperty(name = CDC_CONFIG_OFFSET_STORAGE,
-			havingValue = "org.apache.kafka.connect.storage.FileOffsetBackingStore")
+	@ConditionalOnExpression("'${cdc.config.offset.storage}'.equalsIgnoreCase('org.apache.kafka.connect.storage.FileOffsetBackingStore') " +
+			"or '${cdc.offsetStorage:metadata}'.equalsIgnoreCase('file')")
 	public OffsetBackingStore fileOffsetBackingStore() {
 		return new FileOffsetBackingStore();
 	}
 
 	@Bean
 	@ConditionalOnMissingBean
-	@ConditionalOnProperty(name = CDC_CONFIG_OFFSET_STORAGE,
-			havingValue = "org.apache.kafka.connect.storage.KafkaOffsetBackingStore")
+	@ConditionalOnExpression("'${cdc.config.offset.storage}'.equalsIgnoreCase('org.apache.kafka.connect.storage.KafkaOffsetBackingStore') " +
+			"or '${cdc.offsetStorage:metadata}'.equalsIgnoreCase('kafka')")
 	public OffsetBackingStore kafkaOffsetBackingStore() {
 		return new KafkaOffsetBackingStore();
 	}
 
 	@Bean
 	@ConditionalOnMissingBean
-	@ConditionalOnProperty(name = CDC_CONFIG_OFFSET_STORAGE,
-			havingValue = "org.apache.kafka.connect.storage.MemoryOffsetBackingStore")
+	@ConditionalOnExpression("'${cdc.config.offset.storage}'.equalsIgnoreCase('org.apache.kafka.connect.storage.MemoryOffsetBackingStore') " +
+			"or '${cdc.offsetStorage:metadata}'.equalsIgnoreCase('memory')")
 	public OffsetBackingStore memoryOffsetBackingStore() {
 		return new MemoryOffsetBackingStore();
 	}

@@ -62,6 +62,7 @@ public abstract class CdcSourceIntegrationTests {
 	@TestPropertySource(properties = {
 			//"cdc.config.connector.class=io.debezium.connector.mysql.MySqlConnector",
 			"cdc.connector=mysql",
+			//"cdc.offsetStorage=memory",
 
 			"cdc.config.database.user=debezium",
 			"cdc.config.database.password=dbz",

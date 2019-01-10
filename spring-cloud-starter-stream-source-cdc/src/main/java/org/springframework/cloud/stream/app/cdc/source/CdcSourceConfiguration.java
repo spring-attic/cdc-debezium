@@ -16,14 +16,10 @@
 
 package org.springframework.cloud.stream.app.cdc.source;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.kafka.connect.source.SourceRecord;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
@@ -31,16 +27,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.annotation.Output;
-import org.springframework.cloud.stream.app.cdc.common.core.CdcCommonConfiguration;
-import org.springframework.cloud.stream.app.cdc.common.core.SpringEmbeddedEngine;
+import org.springframework.cloud.stream.app.cdc.common.core.CdcStreamingEngineConfiguration;
 import org.springframework.cloud.stream.messaging.Source;
 import org.springframework.cloud.stream.reactive.StreamEmitter;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageHeaders;
-import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.util.MimeTypeUtils;
 
 /**
  * CDC source that uses the Debezium Connectors to monitor and record all of the row-level changes in the databases.
@@ -51,7 +42,7 @@ import org.springframework.util.MimeTypeUtils;
  */
 @EnableBinding(Source.class)
 @EnableConfigurationProperties({ CdcSourceProperties.class })
-@Import(CdcCommonConfiguration.class)
+@Import(CdcStreamingEngineConfiguration.class)
 public class CdcSourceConfiguration {
 
 	private static final Log logger = LogFactory.getLog(CdcSourceConfiguration.class);
@@ -67,37 +58,4 @@ public class CdcSourceConfiguration {
 	public Flux<Message<byte[]>> emit() {
 		return Flux.create(engine);
 	}
-
-	@Bean
-	public Consumer<FluxSink<Message<byte[]>>> engine(SpringEmbeddedEngine.Builder embeddedEngineBuilder,
-			Function<SourceRecord, byte[]> valueSerializer, Function<SourceRecord, SourceRecord> recordFlattering) {
-
-		return emitter -> {
-
-			Consumer<byte[]> messageConsumer = cdcJsonPayload -> {
-
-				logger.info("CDC Event -> " + new String(cdcJsonPayload));
-
-				Message<byte[]> message = MessageBuilder
-						.withPayload(cdcJsonPayload)
-						.setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE)
-						.build();
-
-				emitter.next(message);
-			};
-
-			SpringEmbeddedEngine engine = embeddedEngineBuilder
-					.notifying(record -> messageConsumer.accept(recordFlattering.andThen(valueSerializer).apply(record)))
-					.build();
-
-			ExecutorService executor = Executors.newSingleThreadExecutor();
-			executor.execute(engine);
-
-			emitter.onDispose(() -> {
-				engine.stop();
-				executor.shutdown();
-			});
-		};
-	}
-
 }
