@@ -26,13 +26,21 @@ Then implement a `Consumer<SourceRecord>` bean handler to receive and process th
 
 [source, java]
 ----
-    @Bean
-    public Consumer<SourceRecord> mySourceRecordConsumer() {
-        return sourceRecord -> {
-            System.out.println(" My handler: " + sourceRecord.toString());
-        };
-    }
+@Bean
+public Consumer<SourceRecord> mySourceRecordConsumer( # <1>
+        Function<SourceRecord, byte[]> valueSerializer) { # <2>
+
+    return sourceRecord -> {
+        System.out.println(sourceRecord.topic() # <3>
+            + " : " + new String(valueSerializer.apply(sourceRecord))); # <4>
+    };
+}
 ----
+
+<1> CDC event lister that is called on every data change.
+<2> Optional valueSerializer configured with Kafka converters (by default JsonConverter) that allows to serialize the SourceRecord into a compact binary format.
+<3> Use `topic()` to obtain the logical identifier of the data being changed (e.g. cdc-name.DB-name.table-name)
+<4> Convert to JSON message using the valueSerializer.
 
 NOTE: you may have to add `@AutoConfigureBefore(CdcAutoConfiguration.class)` to your Boot class to ensure that your record consumer overrides the default handlers.
 
