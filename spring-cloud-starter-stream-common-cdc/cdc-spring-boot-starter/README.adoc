@@ -44,6 +44,21 @@ public Consumer<SourceRecord> mySourceRecordConsumer( # <1>
 
 NOTE: you may have to add `@AutoConfigureBefore(CdcAutoConfiguration.class)` to your Boot class to ensure that your record consumer overrides the default handlers.
 
+Above handler will produce output messages like this:
+[source, bash]
+----
+my-app-connector.inventory.addresses : {"id":10,"customer_id":1001,"street":"3183 Moore Avenue","city":"Euless","state":"Texas","zip":"76036","type":"SHIPPING"}
+my-app-connector.inventory.addresses : {"id":11,"customer_id":1001,"street":"2389 Hidden Valley Road","city":"Harrisburg","state":"Pennsylvania","zip":"17116","type":"BILLING"}
+my-app-connector.inventory.customers : {"id":1004,"first_name":"Anne","last_name":"Kretchmar","email":"annek@noanswer.org"}
+my-app-connector.inventory.orders : {"order_number":10001,"order_date":16816,"purchaser":1001,"quantity":1,"product_id":102}
+my-app-connector.inventory.orders : {"order_number":10002,"order_date":16817,"purchaser":1002,"quantity":2,"product_id":105}
+my-app-connector.inventory.products : {"id":103,"name":"12-pack drill bits","description":"12-pack of drill bits with sizes ranging from #40 to #3","weight":0.800000011920929}
+my-app-connector.inventory.products : {"id":104,"name":"hammer","description":"12oz carpenter's hammer","weight":0.75}
+.875}
+my-app-connector.inventory.products : {"id":109,"name":"spare tire","description":"24 inch spare tire","weight":22.200000762939453}
+my-app-connector.inventory.products_on_hand : {"product_id":101,"quantity":3}
+my-app-connector.inventory.products_on_hand : {"product_id":107,"quantity":44}
+----
 
 All Debezium connector properties supported. Just prefix those properties with `cdc.config` prefix.
 
