@@ -42,19 +42,27 @@ All Debezium connector properties supported. Just prefix those properties with `
 Following snipped shows how to configure the https://debezium.io/docs/connectors/mysql/[MySqlConnector] for MySQL database running on localhost:3306
 [source]
 ----
-cdc.config.name=my-sql-connector
-cdc.config.server.id=85744
-cdc.config.database.server.name=my-app-connector
+cdc.config.name=my-sql-connector # <1>
+cdc.config.server.id=85744 # <1>
+cdc.config.database.server.name=my-app-connector # <1>
 
-cdc.config.connector.class=io.debezium.connector.mysql.MySqlConnector
-cdc.config.database.user=debezium
-cdc.config.database.password=dbz
-cdc.config.database.hostname=localhost
-cdc.config.database.port=3306
+cdc.connector=mysql # <2>
+
+cdc.config.database.user=debezium # <3>
+cdc.config.database.password=dbz # <3>
+cdc.config.database.hostname=localhost # <3>
+cdc.config.database.port=3306 # <3>
+
+cdc.includeSchema=false # <4>
+
+cdc.flattering.enabled=true # <5>
 ----
 
-Also `cdc.includeSchema` property allows you to include or exclude the value schema from the `SourceRecord` content.
-The `cdc.flattering.enabled`, `cdc.flattering.dropTombstones`, `cdc.flattering.dropDeletes` properties to control the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering] feature.
+<1> Configures the CDC Source to use https://debezium.io/docs/connectors/mysql/[MySqlConnector]. (equivalent to setting `cdc.config.connector.class=io.debezium.connector.mysql.MySqlConnector`).
+<2> Metadata used to identify and dispatch the incoming events.
+<3> Connection to the MySQL server running on `localhost:3306` as `debezium` user.
+<4> Disables the inclusion of the value schema with every `SourceRecord` event.
+<5> Enables the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering] feature.
 
 The full list of properties:
 
@@ -62,11 +70,13 @@ The full list of properties:
 
 //tag::configuration-properties[]
 $$cdc.config$$:: $$Spring pass-trough wrapper for the debezium configuration properties. All properties with 'cdc.config' prefix are converted into Debezium io.debezium.config.Configuration and the prefix is dropped.$$ *($$Map<String, String>$$, default: `$$<none>$$`)*
+$$cdc.connector$$:: $$Shortcut for the cdc.config.connector.class property. Either of those can be used as long as they do not contradict with each other.$$ *($$ConnectorType$$, default: `$$<none>$$`, possible values: `mysql`,`postgres`,`mongodb`,`oracle`,`sqlserver`)*
 $$cdc.flattering.delete-handling-mode$$:: $$How to handle delete records. Options are: (1) none - records are passed, (2) drop - records are removed and (3) rewrite - adds '__deleted' field to the records.$$ *($$DeleteHandlingMode$$, default: `$$<none>$$`)*
 $$cdc.flattering.drop-deletes$$:: $$Drop delete records converted to tombstones records if a processing connector cannot process them or a compaction is undesirable.$$ *($$Boolean$$, default: `$$false$$`)*
 $$cdc.flattering.drop-tombstones$$:: $$Debezium by default generates a tombstone record to enable Kafka compaction after a delete record was generated. This record is usually filtered out to avoid duplicates as a delete record is converted to a tombstone record, too.$$ *($$Boolean$$, default: `$$true$$`)*
 $$cdc.flattering.enabled$$:: $$Enable flattering the source record events (https://debezium.io/docs/configuration/event-flattening).$$ *($$Boolean$$, default: `$$false$$`)*
 $$cdc.include-schema$$:: $$If true the value's schema is included in the outbound message.$$ *($$Boolean$$, default: `$$false$$`)*
+$$cdc.offset-storage$$:: $$When a Kafka Connect connector runs, it reads information from the source and periodically records "offsets" that define how much of that information it has processed. Should the connector be restarted, it will use the last recorded offset to know where in the source information it should resume reading.$$ *($$OffsetStorageType$$, default: `$$<none>$$`, possible values: `memory`,`file`,`kafka`,`metadata`)*
 //end::configuration-properties[]
 
 //end::ref-doc[]
