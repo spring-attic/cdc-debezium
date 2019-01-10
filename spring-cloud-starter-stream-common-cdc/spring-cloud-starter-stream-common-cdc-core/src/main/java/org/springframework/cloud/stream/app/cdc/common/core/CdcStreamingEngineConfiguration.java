@@ -20,6 +20,8 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.kafka.connect.source.SourceRecord;
@@ -44,24 +46,36 @@ public class CdcStreamingEngineConfiguration {
 
 	@Bean
 	public Consumer<FluxSink<Message<byte[]>>> engine(SpringEmbeddedEngine.Builder embeddedEngineBuilder,
-			Function<SourceRecord, byte[]> valueSerializer, Function<SourceRecord, SourceRecord> recordFlattering) {
+			Function<SourceRecord, byte[]> valueSerializer, Function<SourceRecord, SourceRecord> recordFlattering,
+			ObjectMapper mapper, CdcCommonProperties cdcCommonProperties) {
 
 		return emitter -> {
 
-			Consumer<byte[]> messageConsumer = cdcJsonPayload -> {
+			Consumer<SourceRecord> messageConsumer = sourceRecord -> {
 
-				logger.info("CDC Event -> " + new String(cdcJsonPayload));
+				byte[] cdcJsonPayload = valueSerializer.apply(sourceRecord);
 
-				Message<byte[]> message = MessageBuilder
+				MessageBuilder<byte[]> messageBuilder = MessageBuilder
 						.withPayload(cdcJsonPayload)
-						.setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE)
-						.build();
+						.setHeader("cdc.topic", sourceRecord.topic())
+						.setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE);
 
-				emitter.next(message);
+				//logger.info("CDC Event -> " + new String(cdcJsonPayload));
+
+				if (cdcCommonProperties.isOffsetHeader()) {
+					try {
+						messageBuilder.setHeader("cdc.offset", mapper.writeValueAsString(sourceRecord.sourceOffset()));
+					}
+					catch (JsonProcessingException e) {
+						logger.warn("Failed to record cdc.offset header", e);
+					}
+				}
+
+				emitter.next(messageBuilder.build());
 			};
 
 			SpringEmbeddedEngine engine = embeddedEngineBuilder
-					.notifying(record -> messageConsumer.accept(recordFlattering.andThen(valueSerializer).apply(record)))
+					.notifying(record -> messageConsumer.accept(recordFlattering.apply(record)))
 					.build();
 
 			ExecutorService executor = Executors.newSingleThreadExecutor();

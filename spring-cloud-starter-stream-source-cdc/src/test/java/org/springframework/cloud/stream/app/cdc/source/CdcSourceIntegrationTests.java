@@ -87,6 +87,10 @@ public abstract class CdcSourceIntegrationTests {
 
 			do {
 				received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+				if (received != null) {
+					System.out.println("Headers: " + received.getHeaders());
+					System.out.println("Payload: " + received.getPayload());
+				}
 			} while (received != null);
 
 		}
@@ -115,6 +119,10 @@ public abstract class CdcSourceIntegrationTests {
 
 			do {
 				received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+				if (received != null) {
+					System.out.println("Headers: " + received.getHeaders());
+					System.out.println("Payload: " + received.getPayload());
+				}
 			} while (received != null);
 
 		}
@@ -140,6 +148,10 @@ public abstract class CdcSourceIntegrationTests {
 
 			do {
 				received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+				if (received != null) {
+					System.out.println("Headers: " + received.getHeaders());
+					System.out.println("Payload: " + received.getPayload());
+				}
 			} while (received != null);
 
 		}
@@ -165,6 +177,10 @@ public abstract class CdcSourceIntegrationTests {
 
 			do {
 				received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+				if (received != null) {
+					System.out.println("Headers: " + received.getHeaders());
+					System.out.println("Payload: " + received.getPayload());
+				}
 			} while (received != null);
 
 		}

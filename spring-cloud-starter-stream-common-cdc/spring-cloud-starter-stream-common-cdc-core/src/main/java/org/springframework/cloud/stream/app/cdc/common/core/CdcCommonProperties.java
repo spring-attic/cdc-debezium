@@ -62,6 +62,11 @@ public class CdcCommonProperties {
 	@NotNull
 	private ConnectorType connector = null;
 
+	/**
+	 * Should the source record offset metadata be included in the outbound message header or not.
+	 */
+	private boolean offsetHeader = false;
+
 	public enum OffsetStorageType {
 		memory("org.apache.kafka.connect.storage.MemoryOffsetBackingStore"),
 		file("org.apache.kafka.connect.storage.FileOffsetBackingStore"),
@@ -99,7 +104,7 @@ public class CdcCommonProperties {
 		/**
 		 * Enable flattering the source record events (https://debezium.io/docs/configuration/event-flattening).
 		 */
-		private boolean enabled = false;
+		private boolean enabled = true;
 
 		/**
 		 * Debezium by default generates a tombstone record to enable Kafka compaction after a delete record was generated.
@@ -108,16 +113,10 @@ public class CdcCommonProperties {
 		private boolean dropTombstones = true;
 
 		/**
-		 * Drop delete records converted to tombstones records if a processing connector cannot process them or a
-		 * compaction is undesirable.
-		 */
-		private boolean dropDeletes = false;
-
-		/**
 		 * How to handle delete records. Options are: (1) none - records are passed, (2) drop - records are removed and
 		 * (3) rewrite - adds '__deleted' field to the records.
 		 */
-		private DeleteHandlingMode deleteHandlingMode = DeleteHandlingMode.drop;
+		private DeleteHandlingMode deleteHandlingMode = DeleteHandlingMode.none;
 
 		public boolean isEnabled() {
 			return enabled;
@@ -125,14 +124,6 @@ public class CdcCommonProperties {
 
 		public void setEnabled(boolean enabled) {
 			this.enabled = enabled;
-		}
-
-		public boolean isDropDeletes() {
-			return dropDeletes;
-		}
-
-		public void setDropDeletes(boolean dropDeletes) {
-			this.dropDeletes = dropDeletes;
 		}
 
 		public boolean isDropTombstones() {
@@ -189,6 +180,14 @@ public class CdcCommonProperties {
 
 	public void setConnector(ConnectorType connector) {
 		this.connector = connector;
+	}
+
+	public boolean isOffsetHeader() {
+		return offsetHeader;
+	}
+
+	public void setOffsetHeader(boolean offsetHeader) {
+		this.offsetHeader = offsetHeader;
 	}
 
 	@AssertTrue

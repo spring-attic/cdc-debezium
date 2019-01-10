@@ -51,16 +51,17 @@ public class CdcCommonConfiguration {
 	}
 
 	@Bean
-	public Function<SourceRecord, SourceRecord> recordFlattering(CdcCommonProperties properties) {
+	public Function<SourceRecord, SourceRecord> recordFlattering(CdcCommonProperties properties,
+			UnwrapFromEnvelope unwrapFromEnvelope) {
 		return sourceRecord -> properties.getFlattering().isEnabled() ?
-				(SourceRecord) unwrapFromEnvelope(properties).apply(sourceRecord) : sourceRecord;
+				(SourceRecord) unwrapFromEnvelope.apply(sourceRecord) : sourceRecord;
 	}
 
-	private UnwrapFromEnvelope unwrapFromEnvelope(CdcCommonProperties properties) {
+	@Bean
+	public UnwrapFromEnvelope unwrapFromEnvelope(CdcCommonProperties properties) {
 		UnwrapFromEnvelope unwrapFromEnvelope = new UnwrapFromEnvelope();
 		Map<String, Object> config = unwrapFromEnvelope.config().defaultValues();
 		config.put("drop.tombstones", properties.getFlattering().isDropTombstones());
-		config.put("drop.deletes", properties.getFlattering().isDropDeletes());
 		config.put("delete.handling.mode", properties.getFlattering().getDeleteHandlingMode().name());
 		unwrapFromEnvelope.configure(config);
 
