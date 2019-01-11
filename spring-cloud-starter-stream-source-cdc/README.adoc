@@ -118,7 +118,7 @@ Use following properties to connect the CDC Source to the MySQL DB:
 cdc.connector=mysql # <1>
 
 cdc.name=my-sql-connector # <2>
-cdc.config.server.id=85744 # <2>
+cdc.config.database.server.id=85744 # <2>
 cdc.config.database.server.name=my-app-connector # <2>
 
 cdc.config.database.user=debezium  # <3>
@@ -159,7 +159,7 @@ cdc.connector=postgres # <1>
 cdc.offset.storage=memory #<2>
 
 cdc.name=my-sql-connector # <3>
-cdc.config.server.id=85744 # <3>
+cdc.config.database.server.id=85744 # <3>
 cdc.config.database.server.name=my-app-connector # <3>
 
 cdc.config.database.user=postgres  # <4>

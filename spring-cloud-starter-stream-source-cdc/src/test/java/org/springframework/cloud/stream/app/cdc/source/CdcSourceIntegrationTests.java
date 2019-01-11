@@ -66,7 +66,7 @@ public abstract class CdcSourceIntegrationTests {
 			"cdc.config.database.hostname=localhost",
 			"cdc.config.database.port=3306",
 
-			"cdc.config.server.id=85744",
+			"cdc.config.database.server.id=85744",
 			"cdc.config.database.server.name=my-app-connector",
 
 	})

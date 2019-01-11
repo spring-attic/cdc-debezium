@@ -66,11 +66,11 @@ Following snipped shows how to configure the https://debezium.io/docs/connectors
 [source]
 ----
 cdc.name=my-sql-connector # <1>
-cdc.config.server.id=85744 # <1>
-cdc.config.database.server.name=my-app-connector # <1>
 
 cdc.connector=mysql # <2>
 
+cdc.config.database.server.id=85744 # <3>
+cdc.config.database.server.name=my-app-connector # <3>
 cdc.config.database.user=debezium # <3>
 cdc.config.database.password=dbz # <3>
 cdc.config.database.hostname=localhost # <3>
@@ -81,10 +81,10 @@ cdc.schema=false # <4>
 cdc.flattering.enabled=true # <5>
 ----
 
-<1> Configures the CDC Source to use https://debezium.io/docs/connectors/mysql/[MySqlConnector]. (equivalent to setting `cdc.config.connector.class=io.debezium.connector.mysql.MySqlConnector`).
-<2> Metadata used to identify and dispatch the incoming events.
-<3> Connection to the MySQL server running on `localhost:3306` as `debezium` user.
-<4> Disables the inclusion of the value schema with every `SourceRecord` event.
+<1> Metadata used to identify and dispatch the incoming events.
+<2> Configures the CDC Source to use https://debezium.io/docs/connectors/mysql/[MySqlConnector]. (equivalent to setting `cdc.config.connector.class=io.debezium.connector.mysql.MySqlConnector`).
+<3> Connector specific configurations. MySQL server logical name, connect location and access credentials.
+<4> Do not serialize the record's schema in the output messages.
 <5> Enables the https://debezium.io/docs/configuration/event-flattening/[CDC Event Flattering] feature.
 
 The full list of properties:
