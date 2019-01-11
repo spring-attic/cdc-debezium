@@ -522,8 +522,8 @@ public final class SpringEmbeddedEngine implements Runnable {
 	private SourceConnector connector;
 	private OffsetBackingStore offsetStore;
 
-	private SpringEmbeddedEngine(Configuration config, ClassLoader classLoader, Clock clock, Consumer<SourceRecord> consumer,
-			CompletionCallback completionCallback, ConnectorCallback connectorCallback,
+	private SpringEmbeddedEngine(Configuration config, ClassLoader classLoader, Clock clock,
+			Consumer<SourceRecord> consumer, CompletionCallback completionCallback, ConnectorCallback connectorCallback,
 			OffsetCommitPolicy offsetCommitPolicy, SourceConnector sourceConnector, OffsetBackingStore offsetStore) {
 		this.connector = sourceConnector;
 		this.offsetStore = offsetStore;
@@ -672,6 +672,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 
 				};
 				connector.initialize(context);
+
 				OffsetStorageWriter offsetWriter = new OffsetStorageWriter(offsetStore, engineName,
 						keyConverter, valueConverter);
 				OffsetStorageReader offsetReader = new OffsetStorageReaderImpl(offsetStore, engineName,

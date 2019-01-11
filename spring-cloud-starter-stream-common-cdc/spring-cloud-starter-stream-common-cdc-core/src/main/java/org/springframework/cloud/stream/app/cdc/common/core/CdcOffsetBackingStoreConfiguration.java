@@ -36,7 +36,7 @@ public class CdcOffsetBackingStoreConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	@ConditionalOnExpression("'${cdc.config.offset.storage}'.equalsIgnoreCase('org.springframework.cloud.stream.app.cdc.common.core.store.MetadataStoreOffsetBackingStore') " +
-			"or '${cdc.offsetStorage:metadata}'.equals('metadata')")
+			"or '${cdc.offset.storage:metadata}'.equals('metadata')")
 	public OffsetBackingStore metadataStoreOffsetBackingStore(MetadataStore metadataStore) {
 		return new MetadataStoreOffsetBackingStore(metadataStore);
 	}
@@ -44,7 +44,7 @@ public class CdcOffsetBackingStoreConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	@ConditionalOnExpression("'${cdc.config.offset.storage}'.equalsIgnoreCase('org.apache.kafka.connect.storage.FileOffsetBackingStore') " +
-			"or '${cdc.offsetStorage:metadata}'.equalsIgnoreCase('file')")
+			"or '${cdc.offset.storage:metadata}'.equalsIgnoreCase('file')")
 	public OffsetBackingStore fileOffsetBackingStore() {
 		return new FileOffsetBackingStore();
 	}
@@ -52,7 +52,7 @@ public class CdcOffsetBackingStoreConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	@ConditionalOnExpression("'${cdc.config.offset.storage}'.equalsIgnoreCase('org.apache.kafka.connect.storage.KafkaOffsetBackingStore') " +
-			"or '${cdc.offsetStorage:metadata}'.equalsIgnoreCase('kafka')")
+			"or '${cdc.offset.storage:metadata}'.equalsIgnoreCase('kafka')")
 	public OffsetBackingStore kafkaOffsetBackingStore() {
 		return new KafkaOffsetBackingStore();
 	}
@@ -60,7 +60,7 @@ public class CdcOffsetBackingStoreConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	@ConditionalOnExpression("'${cdc.config.offset.storage}'.equalsIgnoreCase('org.apache.kafka.connect.storage.MemoryOffsetBackingStore') " +
-			"or '${cdc.offsetStorage:metadata}'.equalsIgnoreCase('memory')")
+			"or '${cdc.offset.storage:metadata}'.equalsIgnoreCase('memory')")
 	public OffsetBackingStore memoryOffsetBackingStore() {
 		return new MemoryOffsetBackingStore();
 	}

@@ -86,23 +86,28 @@ public class CdcCommonConfiguration {
 	public SpringEmbeddedEngine.Builder embeddedEngineBuilder(CdcCommonProperties properties,
 			SourceConnector sourceConnector, OffsetBackingStore offsetBackingStore) {
 
-		if (!properties.getConfig().containsKey("offset.storage")) {
-			properties.getConfig().put("offset.storage", properties.getOffsetStorage().offsetStorageClass);
-		}
-		else {
-			if (!properties.getOffsetStorage().offsetStorageClass.equalsIgnoreCase(properties.getConfig().get("offset.storage"))) {
-				logger.warn("offset.storage property mismatch!" + properties.getOffsetStorage().offsetStorageClass
-						+ " vs. " + properties.getConfig().get("offset.storage"));
-			}
-		}
 		if (!properties.getConfig().containsKey("connector.class")) {
 			properties.getConfig().put("connector.class", properties.getConnector().connectorClass);
 		}
-		else {
-			if (!properties.getConnector().connectorClass.equalsIgnoreCase(properties.getConfig().get("connector.class"))) {
-				logger.warn("connector property mismatch!" + properties.getConnector().connectorClass
-						+ " vs. " + properties.getConfig().get("connector.class"));
-			}
+
+		if (!properties.getConfig().containsKey("name")) {
+			properties.getConfig().put("name", properties.getName());
+		}
+
+		if (!properties.getConfig().containsKey("offset.flush.interval.ms")) {
+			properties.getConfig().put("offset.flush.interval.ms", properties.getOffset().getFlushInterval().toMillis() + "");
+		}
+
+		if (!properties.getConfig().containsKey("offset.flush.timeout.ms")) {
+			properties.getConfig().put("offset.flush.timeout.ms", properties.getOffset().getCommitTimeout().toMillis() + "");
+		}
+
+		if (!properties.getConfig().containsKey("offset.commit.policy")) {
+			properties.getConfig().put("offset.commit.policy", properties.getOffset().getPolicy().policyClassName);
+		}
+
+		if (!properties.getConfig().containsKey("offset.storage")) {
+			properties.getConfig().put("offset.storage", properties.getOffset().getStorage().offsetStorageClass);
 		}
 
 		return SpringEmbeddedEngine.create()

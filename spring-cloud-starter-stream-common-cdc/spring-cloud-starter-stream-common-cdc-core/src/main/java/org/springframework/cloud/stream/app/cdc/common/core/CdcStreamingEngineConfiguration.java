@@ -60,9 +60,7 @@ public class CdcStreamingEngineConfiguration {
 						.setHeader("cdc.topic", sourceRecord.topic())
 						.setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE);
 
-				//logger.info("CDC Event -> " + new String(cdcJsonPayload));
-
-				if (cdcCommonProperties.isOffsetHeader()) {
+				if (cdcCommonProperties.getOffset().isSerialize()) {
 					try {
 						messageBuilder.setHeader("cdc.offset", mapper.writeValueAsString(sourceRecord.sourceOffset()));
 					}

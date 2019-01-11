@@ -1,10 +1,17 @@
 //tag::ref-doc[]
 = CDC Source
 
-https://en.wikipedia.org/wiki/Change_data_capture[Change Data Capture] (CDC) `source` that captures and streams change events from multiple databases.
+https://en.wikipedia.org/wiki/Change_data_capture[Change Data Capture] (CDC) `source` that captures and streams change events from various databases.
 Currently it supports `MySQL`, `PostgreSQL`, `MongoDB`, `Oracle` and `SQL Server` databases.
 
-It wraps and builds upon the https://debezium.io/docs/embedded/[Debezium Embedded Connector] and provides streaming database changes over arbitrary message binders and thus not be limited to Kafka as the only broker.
+Build upon https://debezium.io/docs/embedded/[Debezium Embedded Connector], the `CDC Source` allows capturing and streaming database changes over different message binders such Apache Kafka, RabbitMQ and all Spring Cloud Stream supporter brokers.
+
+All Debezium engine and connector configuration properties are supported. Just apply them with `cdc.config.` property prefix. For example for setting the  `connector.class` use the `cdc.config.connector.class` property.
+
+For the most frequently used properties we are providing a `springified` shortcuts with auto-completion support. For example instead of `cdc.config.connector.class=io.debezium.connector.mysql.MySqlConnector` you can use `cdc.connector=mysql` instead!
+When both the `cdc.config.XXX` and its shortcut version are set for the same property are `cdc.config.` setting has precedence!
+
+Also we have provided a new default `BackingOffsetStore` based on the `MetadataStore` service allowing to leverage the microservices friendly ways for storing the offset metadata.
 
 == Options
 
@@ -14,10 +21,45 @@ $$cdc.connector$$:: $$Shortcut for the cdc.config.connector.class property. Eith
 $$cdc.flattering.delete-handling-mode$$:: $$How to handle delete records. Options are: (1) none - records are passed, (2) drop - records are removed and (3) rewrite - adds '__deleted' field to the records.$$ *($$DeleteHandlingMode$$, default: `$$<none>$$`, possible values: `none`,`drop`,`rewrite`)*
 $$cdc.flattering.drop-tombstones$$:: $$Debezium by default generates a tombstone record to enable Kafka compaction after a delete record was generated. This record is usually filtered out to avoid duplicates as a delete record is converted to a tombstone record, too.$$ *($$Boolean$$, default: `$$true$$`)*
 $$cdc.flattering.enabled$$:: $$Enable flattering the source record events (https://debezium.io/docs/configuration/event-flattening).$$ *($$Boolean$$, default: `$$true$$`)*
-$$cdc.offset-header$$:: $$Should the source record offset metadata be included in the outbound message header or not.$$ *($$Boolean$$, default: `$$false$$`)*
-$$cdc.offset-storage$$:: $$When a Kafka Connect connector runs, it reads information from the source and periodically records "offsets" that define how much of that information it has processed. Should the connector be restarted, it will use the last recorded offset to know where in the source information it should resume reading.$$ *($$OffsetStorageType$$, default: `$$<none>$$`, possible values: `memory`,`file`,`kafka`,`metadata`)*
+$$cdc.name$$:: $$Unique name for this sourceConnector instance.$$ *($$String$$, default: `$$<none>$$`)*
+$$cdc.offset.commit-timeout$$:: $$Maximum number of milliseconds to wait for records to flush and partition offset data to be committed to offset storage before cancelling the process and restoring the offset data to be committed in a future attempt.$$ *($$Duration$$, default: `$$5000ms$$`)*
+$$cdc.offset.flush-interval$$:: $$Interval at which to try committing offsets. The default is 1 minute.$$ *($$Duration$$, default: `$$60000ms$$`)*
+$$cdc.offset.policy$$:: $$Offset storage commit policy.$$ *($$OffsetPolicy$$, default: `$$<none>$$`)*
+$$cdc.offset.serialize$$:: $$When true the source record's offset metadata is serialized into the outbound message header (as cdc.offset). (Currently applicable to the streaming engine config only!)$$ *($$Boolean$$, default: `$$false$$`)*
+$$cdc.offset.storage$$:: $$When a Kafka Connect connector runs, it reads information from the source and periodically records "offsets" that define how much of that information it has processed. Should the connector be restarted, it will use the last recorded offset to know where in the source information it should resume reading.$$ *($$OffsetStorageType$$, default: `$$<none>$$`, possible values: `memory`,`file`,`kafka`,`metadata`)*
 $$cdc.schema$$:: $$If set then the value's schema is included as part of the the outbound message.$$ *($$Boolean$$, default: `$$false$$`)*
 //end::configuration-properties[]
+
+
+.Table Shortcut Properties Mapping
+|===
+| Shortcut | Original | Description
+
+|cdc.connector
+|cdc.config.connector.class
+|`mysql` : MySqlConnector, `postgres` : PostgresConnector, `mongodb` : MongodbSourceConnector, `oracle` : OracleConnector, `sqlserver` : SqlServerConnector
+
+|cdc.name
+|cdc.config.name
+|
+
+|cdc.offset.flush-interval
+|cdc.config.offset.flush.interval.ms
+|
+
+|cdc.offset.commit-timeout
+|cdc.config.offset.flush.timeout.ms
+|
+
+|cdc.offset.policy
+|cdc.config.offset.commit.policy
+|`periodic` : PeriodicCommitOffsetPolicy, `always` : AlwaysCommitOffsetPolicy
+
+|cdc.offset.storage
+|cdc.config.offset.storage
+|`metadata` : MetadataStoreOffsetBackingStore, `file` : FileOffsetBackingStore, `kafka` : KafkaOffsetBackingStore, `memory` : MemoryOffsetBackingStore
+
+|===
 
 //end::ref-doc[]
 
@@ -67,8 +109,7 @@ Use following properties to connect the CDC Source to the MySQL DB:
 ----
 cdc.connector=mysql # <1>
 
-cdc.config.offset.flush.interval.ms=60000 # <2>
-cdc.config.name=my-sql-connector # <2>
+cdc.name=my-sql-connector # <2>
 cdc.config.server.id=85744 # <2>
 cdc.config.database.server.name=my-app-connector # <2>
 
@@ -107,10 +148,9 @@ Use following properties to connect the CDC Source to the PostgreSQL:
 [source]
 ----
 cdc.connector=postgres # <1>
-cdc.offsetStorage=memory #<2>
+cdc.offset.storage=memory #<2>
 
-cdc.config.offset.flush.interval.ms=60000 # <3>
-cdc.config.name=my-sql-connector # <3>
+cdc.name=my-sql-connector # <3>
 cdc.config.server.id=85744 # <3>
 cdc.config.database.server.name=my-app-connector # <3>
 
@@ -161,7 +201,7 @@ Use following properties to connect the CDC Source to the MongoDB:
 [source]
 ----
 cdc.connector=mongodb # <1>
-cdc.offsetStorage=memory #<2>
+cdc.offset.storage=memory #<2>
 
 cdc.config.mongodb.hosts=rs0/localhost:27017 # <3>
 cdc.config.mongodb.name=dbserver1 # <3>

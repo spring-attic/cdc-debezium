@@ -65,7 +65,7 @@ All Debezium connector properties supported. Just prefix those properties with `
 Following snipped shows how to configure the https://debezium.io/docs/connectors/mysql/[MySqlConnector] for MySQL database running on localhost:3306
 [source]
 ----
-cdc.config.name=my-sql-connector # <1>
+cdc.name=my-sql-connector # <1>
 cdc.config.server.id=85744 # <1>
 cdc.config.database.server.name=my-app-connector # <1>
 
@@ -94,12 +94,16 @@ The full list of properties:
 //tag::configuration-properties[]
 $$cdc.config$$:: $$Spring pass-trough wrapper for the debezium configuration properties. All properties with 'cdc.config' prefix are converted into Debezium io.debezium.config.Configuration and the prefix is dropped.$$ *($$Map<String, String>$$, default: `$$<none>$$`)*
 $$cdc.connector$$:: $$Shortcut for the cdc.config.connector.class property. Either of those can be used as long as they do not contradict with each other.$$ *($$ConnectorType$$, default: `$$<none>$$`, possible values: `mysql`,`postgres`,`mongodb`,`oracle`,`sqlserver`)*
-$$cdc.flattering.delete-handling-mode$$:: $$How to handle delete records. Options are: (1) none - records are passed, (2) drop - records are removed and (3) rewrite - adds '__deleted' field to the records.$$ *($$DeleteHandlingMode$$, default: `$$<none>$$`)*
-$$cdc.flattering.drop-deletes$$:: $$Drop delete records converted to tombstones records if a processing connector cannot process them or a compaction is undesirable.$$ *($$Boolean$$, default: `$$false$$`)*
+$$cdc.flattering.delete-handling-mode$$:: $$How to handle delete records. Options are: (1) none - records are passed, (2) drop - records are removed and (3) rewrite - adds '__deleted' field to the records.$$ *($$DeleteHandlingMode$$, default: `$$<none>$$`, possible values: `none`,`drop`,`rewrite`)*
 $$cdc.flattering.drop-tombstones$$:: $$Debezium by default generates a tombstone record to enable Kafka compaction after a delete record was generated. This record is usually filtered out to avoid duplicates as a delete record is converted to a tombstone record, too.$$ *($$Boolean$$, default: `$$true$$`)*
-$$cdc.flattering.enabled$$:: $$Enable flattering the source record events (https://debezium.io/docs/configuration/event-flattening).$$ *($$Boolean$$, default: `$$false$$`)*
-$$cdc.schema$$:: $$If true the value's schema is included in the outbound message.$$ *($$Boolean$$, default: `$$false$$`)*
-$$cdc.offset-storage$$:: $$When a Kafka Connect connector runs, it reads information from the source and periodically records "offsets" that define how much of that information it has processed. Should the connector be restarted, it will use the last recorded offset to know where in the source information it should resume reading.$$ *($$OffsetStorageType$$, default: `$$metadata$$`, possible values: `memory`,`file`,`kafka`,`metadata`)*
+$$cdc.flattering.enabled$$:: $$Enable flattering the source record events (https://debezium.io/docs/configuration/event-flattening).$$ *($$Boolean$$, default: `$$true$$`)*
+$$cdc.name$$:: $$Unique name for this sourceConnector instance.$$ *($$String$$, default: `$$<none>$$`)*
+$$cdc.offset.commit-timeout$$:: $$Maximum number of milliseconds to wait for records to flush and partition offset data to be committed to offset storage before cancelling the process and restoring the offset data to be committed in a future attempt.$$ *($$Duration$$, default: `$$5000ms$$`)*
+$$cdc.offset.flush-interval$$:: $$Interval at which to try committing offsets. The default is 1 minute.$$ *($$Duration$$, default: `$$60000ms$$`)*
+$$cdc.offset.policy$$:: $$Offset storage commit policy.$$ *($$Policy$$, default: `$$<none>$$`)*
+$$cdc.offset.serialize$$:: $$When true the source record's offset metadata is serialized into the outbound message header (as cdc.offset). (Currently applicable to the streaming engine config only!)$$ *($$Boolean$$, default: `$$false$$`)*
+$$cdc.offset.storage$$:: $$When a Kafka Connect connector runs, it reads information from the source and periodically records "offsets" that define how much of that information it has processed. Should the connector be restarted, it will use the last recorded offset to know where in the source information it should resume reading.$$ *($$OffsetStorageType$$, default: `$$<none>$$`, possible values: `memory`,`file`,`kafka`,`metadata`)*
+$$cdc.schema$$:: $$If set then the value's schema is included as part of the the outbound message.$$ *($$Boolean$$, default: `$$false$$`)*
 //end::configuration-properties[]
 
 //end::ref-doc[]

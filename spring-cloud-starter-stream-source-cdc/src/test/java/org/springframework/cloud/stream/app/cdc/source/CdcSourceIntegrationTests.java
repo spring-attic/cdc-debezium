@@ -42,14 +42,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 @SpringBootTest(
 		webEnvironment = SpringBootTest.WebEnvironment.NONE,
 		properties = {
-				"cdc.config.name=my-sql-connector",
-
-				"cdc.config.offset.flush.interval.ms=60000",
-
-
-				"cdc.config.database.history=io.debezium.relational.history.MemoryDatabaseHistory",
-
+				"cdc.name=my-sql-connector",
 				"cdc.schema=false",
+				"cdc.config.database.history=io.debezium.relational.history.MemoryDatabaseHistory",
 		})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public abstract class CdcSourceIntegrationTests {
@@ -61,9 +56,10 @@ public abstract class CdcSourceIntegrationTests {
 	protected MessageCollector messageCollector;
 
 	@TestPropertySource(properties = {
-			//"cdc.config.connector.class=io.debezium.connector.mysql.MySqlConnector",
 			"cdc.connector=mysql",
-			//"cdc.offsetStorage=memory",
+			"cdc.schema=false",
+			"cdc.flattering.enabled=true",
+			//"cdc.offset.storage=memory",
 
 			"cdc.config.database.user=debezium",
 			"cdc.config.database.password=dbz",
@@ -73,9 +69,6 @@ public abstract class CdcSourceIntegrationTests {
 			"cdc.config.server.id=85744",
 			"cdc.config.database.server.name=my-app-connector",
 
-			"cdc.schema=false",
-
-			"cdc.flattering.enabled=true",
 	})
 	public static class CdcMysqlTests extends CdcSourceIntegrationTests {
 
