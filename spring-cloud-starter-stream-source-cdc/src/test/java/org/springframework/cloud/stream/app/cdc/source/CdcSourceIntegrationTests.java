@@ -69,6 +69,9 @@ public abstract class CdcSourceIntegrationTests {
 			"cdc.config.database.server.id=85744",
 			"cdc.config.database.server.name=my-app-connector",
 
+			"cdc.stream.header.key=true",
+			"cdc.stream.header.offset=true",
+
 	})
 	public static class CdcMysqlTests extends CdcSourceIntegrationTests {
 

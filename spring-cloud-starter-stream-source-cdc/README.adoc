@@ -8,8 +8,8 @@ Build upon https://debezium.io/docs/embedded/[Debezium Embedded Connector], the 
 
 All Debezium configuration properties are supported. Just prefix the properties with the `cdc.config.` prefix. For example to set the `connector.class` use the `cdc.config.connector.class` instead.
 
-The most frequently used properties are provided with a `springified` shortcuts that allow validation and auto-completion support. For example instead of `cdc.config.connector.class=io.debezium.connector.mysql.MySqlConnector` you can use the shorter `cdc.connector=mysql`!
-When both the `cdc.config.XXX` and the shortcut are set for the same property then the `cdc.config.XXX` setting has precedence!
+For continence some of the most relevant properties are provided with `springified` shortcuts to allow easy configuration and auto-completion features. For example instead of `cdc.config.connector.class=io.debezium.connector.mysql.MySqlConnector` you can use the shorter `cdc.connector=mysql` shortcut. Complete list of shortcuts and their Debezium counterparts are listed in the table below.
+When both the Debezium (e.g. `cdc.config.XXX`) and the shortcut are set for the same property then the `cdc.config.XXX` has a precedence!
 
 Also we have provided a new default `BackingOffsetStore` based on the `MetadataStore` service allowing to leverage the microservices friendly ways for storing the offset metadata.
 
@@ -25,11 +25,11 @@ $$cdc.name$$:: $$Unique name for this sourceConnector instance.$$ *($$String$$, 
 $$cdc.offset.commit-timeout$$:: $$Maximum number of milliseconds to wait for records to flush and partition offset data to be committed to offset storage before cancelling the process and restoring the offset data to be committed in a future attempt.$$ *($$Duration$$, default: `$$5000ms$$`)*
 $$cdc.offset.flush-interval$$:: $$Interval at which to try committing offsets. The default is 1 minute.$$ *($$Duration$$, default: `$$60000ms$$`)*
 $$cdc.offset.policy$$:: $$Offset storage commit policy.$$ *($$OffsetPolicy$$, default: `$$<none>$$`)*
-$$cdc.offset.serialize$$:: $$When true the source record's offset metadata is serialized into the outbound message header (as cdc.offset). (Currently applicable to the streaming engine config only!)$$ *($$Boolean$$, default: `$$false$$`)*
 $$cdc.offset.storage$$:: $$When a Kafka Connect connector runs, it reads information from the source and periodically records "offsets" that define how much of that information it has processed. Should the connector be restarted, it will use the last recorded offset to know where in the source information it should resume reading.$$ *($$OffsetStorageType$$, default: `$$<none>$$`, possible values: `memory`,`file`,`kafka`,`metadata`)*
 $$cdc.schema$$:: $$If set then the value's schema is included as part of the the outbound message.$$ *($$Boolean$$, default: `$$false$$`)*
+$$cdc.stream.header.key$$:: $$When true the source record's key data is serialized into the outbound message header under cdc.key.$$ *($$Boolean$$, default: `$$false$$`)*
+$$cdc.stream.header.offset$$:: $$When true the source record's offset metadata is serialized into the outbound message header under cdc.offset.$$ *($$Boolean$$, default: `$$false$$`)*
 //end::configuration-properties[]
-
 
 .Table Shortcut Properties Mapping
 |===

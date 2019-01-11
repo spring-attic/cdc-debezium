@@ -76,12 +76,6 @@ public class CdcCommonProperties {
 		 */
 		private OffsetStorageType storage = OffsetStorageType.metadata;
 
-		/**
-		 * When true the source record's offset metadata is serialized into the outbound message header (as cdc.offset).
-		 * (Currently applicable to the streaming engine config only!)
-		 */
-		private boolean serialize = false;
-
 		public enum OffsetPolicy {
 			periodic(OffsetCommitPolicy.PeriodicCommitOffsetPolicy.class.getName()),
 			always(OffsetCommitPolicy.AlwaysCommitOffsetPolicy.class.getName());
@@ -125,15 +119,7 @@ public class CdcCommonProperties {
 			this.storage = storage;
 		}
 
-		public boolean isSerialize() {
-			return serialize;
-		}
-
-		public void setSerialize(boolean serialize) {
-			this.serialize = serialize;
-		}
 	}
-	//
 
 	/**
 	 * If set then the value's schema is included as part of the the outbound message.

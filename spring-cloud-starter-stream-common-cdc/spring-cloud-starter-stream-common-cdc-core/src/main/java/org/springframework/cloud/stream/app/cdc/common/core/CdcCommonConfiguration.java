@@ -83,6 +83,12 @@ public class CdcCommonConfiguration {
 	}
 
 	@Bean
+	public Function<SourceRecord, byte[]> keySerializer(Converter valueConverter) {
+		return sourceRecord -> valueConverter.fromConnectData(
+				sourceRecord.topic(), sourceRecord.keySchema(), sourceRecord.key());
+	}
+
+	@Bean
 	public SpringEmbeddedEngine.Builder embeddedEngineBuilder(CdcCommonProperties properties,
 			SourceConnector sourceConnector, OffsetBackingStore offsetBackingStore) {
 

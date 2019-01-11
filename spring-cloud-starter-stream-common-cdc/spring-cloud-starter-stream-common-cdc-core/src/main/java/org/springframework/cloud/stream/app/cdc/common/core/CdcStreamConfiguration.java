@@ -27,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.kafka.connect.source.SourceRecord;
 import reactor.core.publisher.FluxSink;
 
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -39,15 +40,17 @@ import org.springframework.util.MimeTypeUtils;
  * @author Christian Tzolov
  */
 @Configuration
+@EnableConfigurationProperties({ CdcStreamProperties.class })
 @Import({ CdcCommonConfiguration.class })
-public class CdcStreamingEngineConfiguration {
+public class CdcStreamConfiguration {
 
-	private static final Log logger = LogFactory.getLog(CdcStreamingEngineConfiguration.class);
+	private static final Log logger = LogFactory.getLog(CdcStreamConfiguration.class);
 
 	@Bean
 	public Consumer<FluxSink<Message<byte[]>>> engine(SpringEmbeddedEngine.Builder embeddedEngineBuilder,
-			Function<SourceRecord, byte[]> valueSerializer, Function<SourceRecord, SourceRecord> recordFlattering,
-			ObjectMapper mapper, CdcCommonProperties cdcCommonProperties) {
+			Function<SourceRecord, byte[]> valueSerializer, Function<SourceRecord, byte[]> keySerializer,
+			Function<SourceRecord, SourceRecord> recordFlattering,
+			ObjectMapper mapper, CdcStreamProperties cdcStreamingEngineProperties) {
 
 		return emitter -> {
 
@@ -60,7 +63,11 @@ public class CdcStreamingEngineConfiguration {
 						.setHeader("cdc.topic", sourceRecord.topic())
 						.setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE);
 
-				if (cdcCommonProperties.getOffset().isSerialize()) {
+				if (cdcStreamingEngineProperties.getHeader().isKey()) {
+					messageBuilder.setHeader("cdc.key", new String(keySerializer.apply(sourceRecord)));
+				}
+
+				if (cdcStreamingEngineProperties.getHeader().isOffset()) {
 					try {
 						messageBuilder.setHeader("cdc.offset", mapper.writeValueAsString(sourceRecord.sourceOffset()));
 					}

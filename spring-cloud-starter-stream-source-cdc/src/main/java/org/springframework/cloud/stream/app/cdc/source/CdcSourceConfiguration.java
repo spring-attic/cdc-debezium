@@ -27,7 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.annotation.Output;
-import org.springframework.cloud.stream.app.cdc.common.core.CdcStreamingEngineConfiguration;
+import org.springframework.cloud.stream.app.cdc.common.core.CdcStreamConfiguration;
 import org.springframework.cloud.stream.messaging.Source;
 import org.springframework.cloud.stream.reactive.StreamEmitter;
 import org.springframework.context.annotation.Import;
@@ -42,7 +42,7 @@ import org.springframework.messaging.Message;
  */
 @EnableBinding(Source.class)
 @EnableConfigurationProperties({ CdcSourceProperties.class })
-@Import(CdcStreamingEngineConfiguration.class)
+@Import(CdcStreamConfiguration.class)
 public class CdcSourceConfiguration {
 
 	private static final Log logger = LogFactory.getLog(CdcSourceConfiguration.class);
