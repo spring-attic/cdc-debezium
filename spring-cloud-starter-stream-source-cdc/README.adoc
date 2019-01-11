@@ -6,10 +6,10 @@ Currently it supports `MySQL`, `PostgreSQL`, `MongoDB`, `Oracle` and `SQL Server
 
 Build upon https://debezium.io/docs/embedded/[Debezium Embedded Connector], the `CDC Source` allows capturing and streaming database changes over different message binders such Apache Kafka, RabbitMQ and all Spring Cloud Stream supporter brokers.
 
-All Debezium engine and connector configuration properties are supported. Just apply them with `cdc.config.` property prefix. For example for setting the  `connector.class` use the `cdc.config.connector.class` property.
+All Debezium configuration properties are supported. Just prefix the properties with the `cdc.config.` prefix. For example to set the `connector.class` use the `cdc.config.connector.class` instead.
 
-For the most frequently used properties we are providing a `springified` shortcuts with auto-completion support. For example instead of `cdc.config.connector.class=io.debezium.connector.mysql.MySqlConnector` you can use `cdc.connector=mysql` instead!
-When both the `cdc.config.XXX` and its shortcut version are set for the same property are `cdc.config.` setting has precedence!
+The most frequently used properties are provided with a `springified` shortcuts that allow validation and auto-completion support. For example instead of `cdc.config.connector.class=io.debezium.connector.mysql.MySqlConnector` you can use the shorter `cdc.connector=mysql`!
+When both the `cdc.config.XXX` and the shortcut are set for the same property then the `cdc.config.XXX` setting has precedence!
 
 Also we have provided a new default `BackingOffsetStore` based on the `MetadataStore` service allowing to leverage the microservices friendly ways for storing the offset metadata.
 
@@ -58,6 +58,14 @@ $$cdc.schema$$:: $$If set then the value's schema is included as part of the the
 |cdc.offset.storage
 |cdc.config.offset.storage
 |`metadata` : MetadataStoreOffsetBackingStore, `file` : FileOffsetBackingStore, `kafka` : KafkaOffsetBackingStore, `memory` : MemoryOffsetBackingStore
+
+|cdc.flattering.drop-tombstones
+|cdc.config.drop.tombstones
+|
+
+|cdc.flattering.delete-handling-mode
+|cdc.config.delete.handling.mode
+|`none` : none, `drop` : drop, `rewrite` : rewrite
 
 |===
 
