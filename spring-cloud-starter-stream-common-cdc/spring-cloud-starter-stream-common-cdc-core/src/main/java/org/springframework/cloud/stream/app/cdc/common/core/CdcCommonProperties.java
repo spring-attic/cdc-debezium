@@ -23,9 +23,18 @@ import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
+import io.debezium.connector.mysql.MySqlConnector;
+import io.debezium.connector.oracle.OracleConnector;
+import io.debezium.connector.postgresql.PostgresConnector;
+import io.debezium.connector.sqlserver.SqlServerConnector;
 import io.debezium.embedded.spi.OffsetCommitPolicy;
+import io.debezium.relational.history.MemoryDatabaseHistory;
+import org.apache.kafka.connect.storage.FileOffsetBackingStore;
+import org.apache.kafka.connect.storage.KafkaOffsetBackingStore;
+import org.apache.kafka.connect.storage.MemoryOffsetBackingStore;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cloud.stream.app.cdc.common.core.store.MetadataStoreOffsetBackingStore;
 import org.springframework.validation.annotation.Validated;
 
 /**
@@ -80,10 +89,10 @@ public class CdcCommonProperties {
 			periodic(OffsetCommitPolicy.PeriodicCommitOffsetPolicy.class.getName()),
 			always(OffsetCommitPolicy.AlwaysCommitOffsetPolicy.class.getName());
 
-			public final String policyClassName;
+			public final String policyClass;
 
 			OffsetPolicy(String policyClassName) {
-				this.policyClassName = policyClassName;
+				this.policyClass = policyClassName;
 			}
 		}
 
@@ -150,10 +159,10 @@ public class CdcCommonProperties {
 	}
 
 	public enum OffsetStorageType {
-		memory("org.apache.kafka.connect.storage.MemoryOffsetBackingStore"),
-		file("org.apache.kafka.connect.storage.FileOffsetBackingStore"),
-		kafka("org.apache.kafka.connect.storage.KafkaOffsetBackingStore"),
-		metadata("org.springframework.cloud.stream.app.cdc.common.core.store.MetadataStoreOffsetBackingStore");
+		memory(MemoryOffsetBackingStore.class.getName()),
+		file(FileOffsetBackingStore.class.getName()),
+		kafka(KafkaOffsetBackingStore.class.getName()),
+		metadata(MetadataStoreOffsetBackingStore.class.getName());
 
 		public final String offsetStorageClass;
 
@@ -163,11 +172,11 @@ public class CdcCommonProperties {
 	}
 
 	public enum ConnectorType {
-		mysql("io.debezium.connector.mysql.MySqlConnector"),
-		postgres("io.debezium.connector.postgresql.PostgresConnector"),
-		mongodb("io.debezium.connector.mongodb.MongodbSourceConnector"),
-		oracle("io.debezium.connector.oracle.OracleConnector"),
-		sqlserver("io.debezium.connector.sqlserver.SqlServerConnector");
+		mysql(MySqlConnector.class.getName()),
+		postgres(PostgresConnector.class.getName()),
+		mongodb(CdcConnectorConfiguration.MongodbSourceConnector.class.getName()),
+		oracle(OracleConnector.class.getName()),
+		sqlserver(SqlServerConnector.class.getName());
 
 		public final String connectorClass;
 
@@ -243,8 +252,8 @@ public class CdcCommonProperties {
 
 	private Map<String, String> defaultConfig() {
 		Map<String, String> defaultConfig = new HashMap<>();
-		defaultConfig.put("database.history", "io.debezium.relational.history.MemoryDatabaseHistory");
-		defaultConfig.put("offset.flush.interval.ms", "60000");
+		defaultConfig.put("database.history", MemoryDatabaseHistory.class.getName());
+		//defaultConfig.put("offset.flush.interval.ms", "60000");
 		return defaultConfig;
 	}
 

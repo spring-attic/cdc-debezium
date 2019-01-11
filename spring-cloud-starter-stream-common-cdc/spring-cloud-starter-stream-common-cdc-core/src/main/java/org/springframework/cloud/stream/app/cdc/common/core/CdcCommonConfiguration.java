@@ -109,7 +109,7 @@ public class CdcCommonConfiguration {
 		}
 
 		if (!properties.getConfig().containsKey("offset.commit.policy")) {
-			properties.getConfig().put("offset.commit.policy", properties.getOffset().getPolicy().policyClassName);
+			properties.getConfig().put("offset.commit.policy", properties.getOffset().getPolicy().policyClass);
 		}
 
 		if (!properties.getConfig().containsKey("offset.storage")) {
