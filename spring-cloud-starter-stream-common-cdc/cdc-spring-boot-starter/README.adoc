@@ -14,7 +14,7 @@ https://start.spring.io/[Start new Spring Boot project] and add the following st
 <dependency>
     <groupId>org.springframework.cloud.stream.app</groupId>
     <artifactId>cdc-spring-boot-starter</artifactId>
-    <version>2.1.0.BUILD-SNAPSHOT</version>
+    <version>2.1.1.BUILD-SNAPSHOT</version>
 </dependency>
 ----
 
