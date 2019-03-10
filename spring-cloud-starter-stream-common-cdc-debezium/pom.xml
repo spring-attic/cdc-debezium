@@ -4,17 +4,17 @@
 		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>spring-cloud-starter-stream-common-cdc</artifactId>
+	<artifactId>spring-cloud-starter-stream-common-cdc-debezium</artifactId>
 	<packaging>pom</packaging>
 
 	<modules>
-		<module>spring-cloud-starter-stream-common-cdc-core</module>
-		<module>cdc-spring-boot-starter</module>
+		<module>spring-cloud-starter-stream-common-cdc-debezium-core</module>
+		<module>cdc-debezium-spring-boot-starter</module>
 	</modules>
 
 	<parent>
 		<groupId>org.springframework.cloud.stream.app</groupId>
-		<artifactId>cdc-app-starters-build</artifactId>
+		<artifactId>cdc-debezium-app-starters-build</artifactId>
 		<version>2.1.1.BUILD-SNAPSHOT</version>
 	</parent>
 

@@ -13,7 +13,7 @@ https://start.spring.io/[Start new Spring Boot project] and add the following st
 ----
 <dependency>
     <groupId>org.springframework.cloud.stream.app</groupId>
-    <artifactId>cdc-spring-boot-starter</artifactId>
+    <artifactId>cdc-debezium-spring-boot-starter</artifactId>
     <version>2.1.1.BUILD-SNAPSHOT</version>
 </dependency>
 ----

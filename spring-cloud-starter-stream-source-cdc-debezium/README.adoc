@@ -243,7 +243,7 @@ TODO
 == Examples
 
 ```
-java -jar cdc-source.jar ... use the properties TODO
+java -jar cdc-debezium-source.jar ... use the properties TODO
 ```
 
 And here is a example pipeline that uses cdc:

@@ -4,10 +4,10 @@
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.springframework.cloud.stream.app</groupId>
-	<artifactId>cdc-app-dependencies</artifactId>
+	<artifactId>cdc-debezium-app-dependencies</artifactId>
 	<version>2.1.1.BUILD-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	<name>cdc-app-dependencies</name>
+	<name>cdc-debezium-app-dependencies</name>
 	<description>Spring Cloud Stream cdc App Dependencies</description>
 
 	<parent>
@@ -20,7 +20,6 @@
 	<properties>
 		<spring-cloud-stream.version>2.1.2.RELEASE</spring-cloud-stream.version>
 		<version.debezium>0.9.2.Final</version.debezium>
-		<!--<version.debezium>0.9.0.Beta2</version.debezium>-->
 	</properties>
 
 	<dependencyManagement>
@@ -33,19 +32,19 @@
 
 			<dependency>
 				<groupId>org.springframework.cloud.stream.app</groupId>
-				<artifactId>cdc-spring-boot-starter</artifactId>
+				<artifactId>cdc-debezium-spring-boot-starter</artifactId>
 				<version>2.1.1.BUILD-SNAPSHOT</version>
 			</dependency>
 
 			<dependency>
 				<groupId>org.springframework.cloud.stream.app</groupId>
-				<artifactId>spring-cloud-starter-stream-common-cdc-core</artifactId>
+				<artifactId>spring-cloud-starter-stream-common-cdc-debezium-core</artifactId>
 				<version>2.1.1.BUILD-SNAPSHOT</version>
 			</dependency>
 
 			<dependency>
 				<groupId>org.springframework.cloud.stream.app</groupId>
-				<artifactId>spring-cloud-starter-stream-source-cdc</artifactId>
+				<artifactId>spring-cloud-starter-stream-source-cdc-debezium</artifactId>
 				<version>2.1.1.BUILD-SNAPSHOT</version>
 			</dependency>
 
@@ -89,7 +88,7 @@
 
 			<dependency>
 				<groupId>org.springframework.cloud.stream.app</groupId>
-				<artifactId>cdc-app-starters-test-support</artifactId>
+				<artifactId>cdc-debezium-app-starters-test-support</artifactId>
 				<version>2.1.1.BUILD-SNAPSHOT</version>
 				<scope>test</scope>
 			</dependency>
