@@ -235,13 +235,50 @@ cdc.flattering.enabled=true # <6>
 
 You can run also the `CdcSourceIntegrationTests#CdcPostgresTests` using this mysql configuration.
 
+==== SQL Server
+
+Start a `sqlserver` from the `debezium/example-postgres:0.10` Docker image:
+[source, bash]
+----
+docker run -it --rm --name sqlserver -p 1433:1433 -e ACCEPT_EULA=Y -e MSSQL_PID=Standard -e SA_PASSWORD=Password! -e MSSQL_AGENT_ENABLED=true microsoft/mssql-server-linux:2017-CU9-GDR2
+----
+
+Populate with sample data form  debezium's sqlserver tutorial:
+[source, bash]
+----
+wget https://raw.githubusercontent.com/debezium/debezium-examples/master/tutorial/debezium-sqlserver-init/inventory.sql
+cat ./inventory.sql | docker exec -i sqlserver bash -c '/opt/mssql-tools/bin/sqlcmd -U sa -P $SA_PASSWORD'
+----
+
+Use following properties to connect the CDC Source to the SQLServer:
+
+[source]
+----
+cdc.connector=sqlserver # <1>
+cdc.offset.storage=memory #<2>
+
+cdc.name=my-sql-connector # <3>
+cdc.config.database.server.id=85744 # <3>
+cdc.config.database.server.name=my-app-connector # <3>
+
+cdc.config.database.user=sa  # <4>
+cdc.config.database.password=Password! # <4>
+cdc.config.database..dbname=testDB # <4>
+cdc.config.database.hostname=localhost # <4>
+cdc.config.database.port=1433 # <4>
+----
+
+<1> Configures `CDC Source` to use https://debezium.io/docs/connectors/sqlserver/[SqlServerConnector]. Equivalent for setting `cdc.config.connector.class=io.debezium.connector.sqlserver.SqlServerConnector`.
+<2> Configures the Debezium engine to use `memory` (e.g. `cdc.config.offset.storage=org.apache.kafka.connect.storage.MemoryOffsetBackingStore) backing offset store.
+<3> Metadata used to identify and dispatch the incoming events.
+<4> Connection to the SQL Server running on `localhost:1433` as `sa` user.
+
+You can run also the `CdcSourceIntegrationTests#CdcSqlServerTests` using this mysql configuration.
+
 ==== Oracle (incubator)
 
 TODO
 
-==== SQL Server (incubator)
-
-TODO
 
 == Examples
 

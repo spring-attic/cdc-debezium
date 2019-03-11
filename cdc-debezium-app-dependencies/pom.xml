@@ -83,7 +83,7 @@
 			<dependency>
 				<groupId>io.debezium</groupId>
 				<artifactId>debezium-connector-sqlserver</artifactId>
-				<version>0.9.0.Beta2</version>
+				<version>${version.debezium}</version>
 			</dependency>
 
 			<dependency>

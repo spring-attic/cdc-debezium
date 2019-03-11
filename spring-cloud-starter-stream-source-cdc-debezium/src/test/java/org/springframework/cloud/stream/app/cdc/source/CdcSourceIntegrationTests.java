@@ -125,17 +125,21 @@ public abstract class CdcSourceIntegrationTests {
 	}
 
 	@TestPropertySource(properties = {
-			//"cdc.config.connector.class=io.debezium.connector.sqlserver.SqlServerConnector",
 			"cdc.connector=sqlserver",
-			"cdc.config.database.user=Standard",
+			//"cdc.config.database.user=Standard",
+			"cdc.config.database.user=sa",
 			"cdc.config.database.password=Password!",
+			"cdc.config.database.dbname=testDB",
 
 			"cdc.config.database.hostname=localhost",
-			"cdc.config.database.port=1433"
+			"cdc.config.database.port=1433",
+
+			"cdc.name=my-sql-connector",
+			"cdc.config.database.server.id=85744",
+			"cdc.config.database.server.name=my-app-connector"
 	})
 	public static class CdcSqlServerTests extends CdcSourceIntegrationTests {
 
-		@Ignore(" Currently SQL Server Connector is only available at 0.9.0.Beta2")
 		@Test
 		public void testOne() throws InterruptedException {
 
