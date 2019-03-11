@@ -104,12 +104,15 @@ Start the `debezium/example-mysql` in a docker:
 docker run -it --rm --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=debezium -e MYSQL_USER=mysqluser -e MYSQL_PASSWORD=mysqlpw debezium/example-mysql:0.9
 ----
 
-TIP: (optional) Use `mysql` client to connected to the database and to create a `debezium` user with required credentials:
+[TIP]
+====
+(optional) Use `mysql` client to connected to the database and to create a `debezium` user with required credentials:
 [source, bash]
 ----
 docker run -it --rm --name mysqlterm --link mysql --rm mysql:5.7 sh -c 'exec mysql -h"$MYSQL_PORT_3306_TCP_ADDR" -P"$MYSQL_PORT_3306_TCP_PORT" -uroot -p"$MYSQL_ENV_MYSQL_ROOT_PASSWORD"'
 mysql> GRANT SELECT, RELOAD, SHOW DATABASES, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'debezium' IDENTIFIED BY 'dbz';
 ----
+====
 
 Use following properties to connect the CDC Source to the MySQL DB:
 
