@@ -142,10 +142,10 @@ You can run also the `CdcSourceIntegrationTests#CdcMysqlTests` using this mysql 
 
 ==== PostgreSQL
 
-Start a pre-configured postgres server from the `debezium/example-postgres:0.8` Docker image:
+Start a pre-configured postgres server from the `debezium/example-postgres:0.10` Docker image:
 [source, bash]
 ----
-docker run -it --rm --name postgres -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres debezium/example-postgres:0.8
+docker run -it --rm --name postgres -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres debezium/example-postgres:0.10
 ----
 
 You can connect to this server like this:
