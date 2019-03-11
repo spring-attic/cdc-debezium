@@ -186,10 +186,10 @@ You can run also the `CdcSourceIntegrationTests#CdcPostgresTests` using this mys
 
 ==== MongoDB
 
-Start a pre-configured mongodb from the `debezium/example-mongodb:0.8` Docker image:
+Start a pre-configured mongodb from the `debezium/example-mongodb:0.10` Docker image:
 [source, bash]
 ----
-docker run -it --rm --name mongodb -p 27017:27017 -e MONGODB_USER=debezium -e MONGODB_PASSWORD=dbz  debezium/example-mongodb:0.8
+docker run -it --rm --name mongodb -p 27017:27017 -e MONGODB_USER=debezium -e MONGODB_PASSWORD=dbz  debezium/example-mongodb:0.10
 ----
 
 Initialize the inventory collections

@@ -44,47 +44,47 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A mechanism for running a single Kafka Connect {@link SourceConnector} within an application's process. An embedded sourceConnector
+ * A mechanism for running a single Kafka Connect {@link SourceConnector} within an application's process. An embedded connector
  * is entirely standalone and only talks with the source system; no Kafka, Kafka Connect, or Zookeeper processes are needed.
- * Applications using an embedded sourceConnector simply set one up and supply a {@link Consumer consumer function} to which the
- * sourceConnector will pass all {@link SourceRecord}s containing database change events.
+ * Applications using an embedded connector simply set one up and supply a {@link Consumer consumer function} to which the
+ * connector will pass all {@link SourceRecord}s containing database change events.
  * <p>
- * With an embedded sourceConnector, the application that runs the sourceConnector assumes all responsibility for fault tolerance,
- * scalability, and durability. Additionally, applications must specify how the sourceConnector can store its relational database
+ * With an embedded connector, the application that runs the connector assumes all responsibility for fault tolerance,
+ * scalability, and durability. Additionally, applications must specify how the connector can store its relational database
  * schema history and offsets. By default, this information will be stored in memory and will thus be lost upon application
  * restart.
  * <p>
  * Embedded connectors are designed to be submitted to an {@link Executor} or {@link ExecutorService} for execution by a single
- * thread, and a running sourceConnector can be stopped either by calling {@link #stop()} from another thread or by interrupting
+ * thread, and a running connector can be stopped either by calling {@link #stop()} from another thread or by interrupting
  * the running thread (e.g., as is the case with {@link ExecutorService#shutdownNow()}).
  *
  * @author Randall Hauch
  */
 @ThreadSafe
-public final class SpringEmbeddedEngine implements Runnable {
+public final class EmbeddedEngine implements Runnable {
 
 	/**
-	 * A required field for an embedded sourceConnector that specifies the unique name for the sourceConnector instance.
+	 * A required field for an embedded connector that specifies the unique name for the connector instance.
 	 */
 	public static final Field ENGINE_NAME = Field.create("name")
-			.withDescription("Unique name for this sourceConnector instance.")
+			.withDescription("Unique name for this connector instance.")
 			.withValidation(Field::isRequired);
 
-	///**
-	// * A required field for an embedded sourceConnector that specifies the name of the normal Debezium sourceConnector's Java class.
-	// */
-	//public static final Field CONNECTOR_CLASS = Field.create("sourceConnector.class")
-	//		.withDescription("The Java class for the sourceConnector")
-	//		.withValidation(Field::isRequired);
+	/**
+	 * A required field for an embedded connector that specifies the name of the normal Debezium connector's Java class.
+	 */
+	public static final Field CONNECTOR_CLASS = Field.create("connector.class")
+			.withDescription("The Java class for the connector")
+			.withValidation(Field::isRequired);
 
 	/**
 	 * An optional field that specifies the name of the class that implements the {@link OffsetBackingStore} interface,
-	 * and that will be used to store offsets recorded by the sourceConnector.
+	 * and that will be used to store offsets recorded by the connector.
 	 */
 	public static final Field OFFSET_STORAGE = Field.create("offset.storage")
 			.withDescription("The Java class that implements the `OffsetBackingStore` "
 					+ "interface, used to periodically store offsets so that, upon "
-					+ "restart, the sourceConnector can resume where it last left off.")
+					+ "restart, the connector can resume where it last left off.")
 			.withDefault(FileOffsetBackingStore.class.getName());
 
 	/**
@@ -132,7 +132,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 					+ KafkaOffsetBackingStore.class.getName() + " class.");
 
 	/**
-	 * An optional advanced field that specifies the maximum amount of time that the embedded sourceConnector should wait
+	 * An optional advanced field that specifies the maximum amount of time that the embedded connector should wait
 	 * for an offset commit to complete.
 	 */
 	public static final Field OFFSET_FLUSH_INTERVAL_MS = Field.create("offset.flush.interval.ms")
@@ -141,7 +141,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 			.withValidation(Field::isNonNegativeInteger);
 
 	/**
-	 * An optional advanced field that specifies the maximum amount of time that the embedded sourceConnector should wait
+	 * An optional advanced field that specifies the maximum amount of time that the embedded connector should wait
 	 * for an offset commit to complete.
 	 */
 	public static final Field OFFSET_COMMIT_TIMEOUT_MS = Field.create("offset.flush.timeout.ms")
@@ -152,7 +152,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 			.withValidation(Field::isPositiveInteger);
 
 	public static final Field OFFSET_COMMIT_POLICY = Field.create("offset.commit.policy")
-			.withDescription("The fully-qualified class name of the commit policy offsetStorageClass. This class must implement the interface "
+			.withDescription("The fully-qualified class name of the commit policy type. This class must implement the interface "
 					+ OffsetCommitPolicy.class.getName()
 					+ ". The default is a periodic commity policy based upon time intervals.")
 			.withDefault(OffsetCommitPolicy.PeriodicCommitOffsetPolicy.class.getName())
@@ -170,6 +170,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 	 * The array of fields that are required by each connectors.
 	 */
 	public static final Field.Set CONNECTOR_FIELDS = Field.setOf(ENGINE_NAME);
+	//public static final Field.Set CONNECTOR_FIELDS = Field.setOf(ENGINE_NAME, CONNECTOR_CLASS);
 
 	/**
 	 * The array of all exposed fields.
@@ -178,14 +179,17 @@ public final class SpringEmbeddedEngine implements Runnable {
 			OFFSET_FLUSH_INTERVAL_MS, OFFSET_COMMIT_TIMEOUT_MS,
 			INTERNAL_KEY_CONVERTER_CLASS, INTERNAL_VALUE_CONVERTER_CLASS);
 
+	private static final Duration WAIT_FOR_COMPLETION_BEFORE_INTERRUPT_DEFAULT = Duration.ofSeconds(2);
+	private static final String WAIT_FOR_COMPLETION_BEFORE_INTERRUPT_PROP = "debezium.embedded.shutdown.pause.before.interrupt.ms";
+
 	/**
-	 * A store function to be notified when the sourceConnector completes.
+	 * A callback function to be notified when the connector completes.
 	 */
 	public interface CompletionCallback {
 		/**
-		 * Handle the completion of the embedded sourceConnector engine.
+		 * Handle the completion of the embedded connector engine.
 		 *
-		 * @param success {@code true} if the sourceConnector completed normally, or {@code false} if the sourceConnector produced an error
+		 * @param success {@code true} if the connector completed normally, or {@code false} if the connector produced an error
 		 *            that prevented startup or premature termination.
 		 * @param message the completion message; never null
 		 * @param error the error, or null if there was no exception
@@ -194,12 +198,12 @@ public final class SpringEmbeddedEngine implements Runnable {
 	}
 
 	/**
-	 * Callback function which informs users about the various stages a sourceConnector goes through during startup
+	 * Callback function which informs users about the various stages a connector goes through during startup
 	 */
 	public interface ConnectorCallback {
 
 		/**
-		 * Called after a sourceConnector has been successfully started by the engine; i.e. {@link SourceConnector#start(Map)} has
+		 * Called after a connector has been successfully started by the engine; i.e. {@link SourceConnector#start(Map)} has
 		 * completed successfully
 		 */
 		default void connectorStarted() {
@@ -207,7 +211,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 		}
 
 		/**
-		 * Called after a sourceConnector has been successfully stopped by the engine; i.e. {@link SourceConnector#stop()} has
+		 * Called after a connector has been successfully stopped by the engine; i.e. {@link SourceConnector#stop()} has
 		 * completed successfully
 		 */
 		default void connectorStopped() {
@@ -215,7 +219,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 		}
 
 		/**
-		 * Called after a sourceConnector task has been successfully started by the engine; i.e. {@link SourceTask#start(Map)} has
+		 * Called after a connector task has been successfully started by the engine; i.e. {@link SourceTask#start(Map)} has
 		 * completed successfully
 		 */
 		default void taskStarted() {
@@ -223,7 +227,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 		}
 
 		/**
-		 * Called after a sourceConnector task has been successfully stopped by the engine; i.e. {@link SourceTask#stop()} has
+		 * Called after a connector task has been successfully stopped by the engine; i.e. {@link SourceTask#stop()} has
 		 * completed successfully
 		 */
 		default void taskStopped() {
@@ -232,7 +236,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 	}
 
 	/**
-	 * A store function to be notified when the sourceConnector completes.
+	 * A callback function to be notified when the connector completes.
 	 */
 	public static class CompletionResult implements CompletionCallback {
 		private final CompletionCallback delegate;
@@ -264,7 +268,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 		 * Causes the current thread to wait until the {@link #handle(boolean, String, Throwable) completion occurs}
 		 * or until the thread is {@linkplain Thread#interrupt interrupted}.
 		 * <p>
-		 * This method returns immediately if the sourceConnector has completed already.
+		 * This method returns immediately if the connector has completed already.
 		 *
 		 * @throws InterruptedException if the current thread is interrupted while waiting
 		 */
@@ -276,7 +280,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 		 * Causes the current thread to wait until the {@link #handle(boolean, String, Throwable) completion occurs},
 		 * unless the thread is {@linkplain Thread#interrupt interrupted}, or the specified waiting time elapses.
 		 * <p>
-		 * This method returns immediately if the sourceConnector has completed already.
+		 * This method returns immediately if the connector has completed already.
 		 *
 		 * @param timeout the maximum time to wait
 		 * @param unit the time unit of the {@code timeout} argument
@@ -289,20 +293,20 @@ public final class SpringEmbeddedEngine implements Runnable {
 		}
 
 		/**
-		 * Determine if the sourceConnector has completed.
+		 * Determine if the connector has completed.
 		 *
-		 * @return {@code true} if the sourceConnector has completed, or {@code false} if the sourceConnector is still running and this
-		 *         store has not yet been {@link #handle(boolean, String, Throwable) notified}
+		 * @return {@code true} if the connector has completed, or {@code false} if the connector is still running and this
+		 *         callback has not yet been {@link #handle(boolean, String, Throwable) notified}
 		 */
 		public boolean hasCompleted() {
 			return completed.getCount() == 0;
 		}
 
 		/**
-		 * Get whether the sourceConnector completed normally.
+		 * Get whether the connector completed normally.
 		 *
-		 * @return {@code true} if the sourceConnector completed normally, or {@code false} if the sourceConnector produced an error that
-		 *         prevented startup or premature termination (or the sourceConnector has not yet {@link #hasCompleted() completed})
+		 * @return {@code true} if the connector completed normally, or {@code false} if the connector produced an error that
+		 *         prevented startup or premature termination (or the connector has not yet {@link #hasCompleted() completed})
 		 */
 		public boolean success() {
 			return success;
@@ -311,7 +315,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 		/**
 		 * Get the completion message.
 		 *
-		 * @return the completion message, or null if the sourceConnector has not yet {@link #hasCompleted() completed}
+		 * @return the completion message, or null if the connector has not yet {@link #hasCompleted() completed}
 		 */
 		public String message() {
 			return message;
@@ -320,7 +324,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 		/**
 		 * Get the completion error, if there is one.
 		 *
-		 * @return the completion error, or null if there is no error or sourceConnector has not yet {@link #hasCompleted() completed}
+		 * @return the completion error, or null if there is no error or connector has not yet {@link #hasCompleted() completed}
 		 */
 		public Throwable error() {
 			return error;
@@ -330,7 +334,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 		 * Determine if there is a completion error.
 		 *
 		 * @return {@code true} if there is a {@link #error completion error}, or {@code false} if there is no error or
-		 *         the sourceConnector has not yet {@link #hasCompleted() completed}
+		 *         the connector has not yet {@link #hasCompleted() completed}
 		 */
 		public boolean hasError() {
 			return error != null;
@@ -338,7 +342,83 @@ public final class SpringEmbeddedEngine implements Runnable {
 	}
 
 	/**
-	 * A builder to set up and create {@link SpringEmbeddedEngine} instances.
+	 * Contract passed to {@link ChangeConsumer}s, allowing them to commit single records as they have been processed
+	 * and to signal that offsets may be flushed eventually.
+	 */
+	@ThreadSafe
+	public static interface RecordCommitter {
+
+		/**
+		 * Marks a single record as processed, must be called for each
+		 * record.
+		 *
+		 * @param record the record to commit
+		 */
+		void markProcessed(SourceRecord record) throws InterruptedException;
+
+		/**
+		 * Marks a batch as finished, this may result in committing offsets/flushing
+		 * data.
+		 * <p>
+		 * Should be called when a batch of records is finished being processed.
+		 */
+		void markBatchFinished();
+	}
+
+	/**
+	 * A contract invoked by the embedded engine when it has received a batch of change records to be processed. Allows
+	 * to process multiple records in one go, acknowledging their processing once that's done.
+	 */
+	public static interface ChangeConsumer {
+
+		/**
+		 * Handles a batch of records, calling the {@link RecordCommitter#markProcessed(SourceRecord)}
+		 * for each record and {@link RecordCommitter#markBatchFinished()} when this batch is finished.
+		 * @param records the records to be processed
+		 * @param committer the committer that indicates to the system that we are finished
+		 */
+		void handleBatch(List<SourceRecord> records, RecordCommitter committer) throws InterruptedException;
+	}
+
+	private static ChangeConsumer buildDefaultChangeConsumer(Consumer<SourceRecord> consumer) {
+		return new ChangeConsumer() {
+
+			/**
+			 * the default implementation that is compatible with the old Consumer api.
+			 *
+			 * On every record, it calls the consumer, and then only marks the record
+			 * as processed when accept returns, additionally, it handles StopConnectorExceptions
+			 * and ensures that we all ways try and mark a batch as finished, even with exceptions
+			 * @param records the records to be processed
+			 * @param committer the committer that indicates to the system that we are finished
+			 *
+			 * @throws Exception
+			 */
+			@Override
+			public void handleBatch(List<SourceRecord> records, RecordCommitter committer) throws InterruptedException {
+				try {
+					for (SourceRecord record : records) {
+						try {
+							consumer.accept(record);
+							committer.markProcessed(record);
+						}
+						catch (StopConnectorException ex) {
+							// ensure that we mark the record as finished
+							// in this case
+							committer.markProcessed(record);
+							throw ex;
+						}
+					}
+				}
+				finally {
+					committer.markBatchFinished();
+				}
+			}
+		};
+	}
+
+	/**
+	 * A builder to set up and create {@link EmbeddedEngine} instances.
 	 */
 	public static interface Builder {
 
@@ -352,7 +432,16 @@ public final class SpringEmbeddedEngine implements Runnable {
 		Builder notifying(Consumer<SourceRecord> consumer);
 
 		/**
-		 * Use the specified configuration for the sourceConnector. The configuration is assumed to already be valid.
+		 * Pass a custom ChangeConsumer override the default implementation,
+		 * this allows for more complex handling of records for batch and async handling
+		 *
+		 * @param handler the consumer function
+		 * @return this builder object so methods can be chained together; never null
+		 */
+		Builder notifying(ChangeConsumer handler);
+
+		/**
+		 * Use the specified configuration for the connector. The configuration is assumed to already be valid.
 		 *
 		 * @param config the configuration
 		 * @return this builder object so methods can be chained together; never null
@@ -361,7 +450,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 
 		/**
 		 * Use the specified class loader to find all necessary classes. Passing <code>null</code> or not calling this method
-		 * results in the sourceConnector using this class's class loader.
+		 * results in the connector using this class's class loader.
 		 *
 		 * @param classLoader the class loader
 		 * @return this builder object so methods can be chained together; never null
@@ -370,7 +459,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 
 		/**
 		 * Use the specified clock when needing to determine the current time. Passing <code>null</code> or not calling this
-		 * method results in the sourceConnector using the {@link Clock#system() system clock}.
+		 * method results in the connector using the {@link Clock#system() system clock}.
 		 *
 		 * @param clock the clock
 		 * @return this builder object so methods can be chained together; never null
@@ -378,24 +467,24 @@ public final class SpringEmbeddedEngine implements Runnable {
 		Builder using(Clock clock);
 
 		/**
-		 * When the engine's {@link SpringEmbeddedEngine#run()} method completes, call the supplied function with the results.
+		 * When the engine's {@link EmbeddedEngine#run()} method completes, call the supplied function with the results.
 		 *
-		 * @param completionCallback the store function; may be null if errors should be written to the log
+		 * @param completionCallback the callback function; may be null if errors should be written to the log
 		 * @return this builder object so methods can be chained together; never null
 		 */
 		Builder using(CompletionCallback completionCallback);
 
 		/**
-		 * During the engine's {@link SpringEmbeddedEngine#run()} method, call the supplied the supplied function at different
+		 * During the engine's {@link EmbeddedEngine#run()} method, call the supplied the supplied function at different
 		 * stages according to the completion state of each component running within the engine (connectors, tasks etc)
 		 *
-		 * @param connectorCallback the store function; may be null
+		 * @param connectorCallback the callback function; may be null
 		 * @return this builder object so methods can be chained together; never null
 		 */
 		Builder using(ConnectorCallback connectorCallback);
 
 		/**
-		 * During the engine's {@link SpringEmbeddedEngine#run()} method, decide when the offsets
+		 * During the engine's {@link EmbeddedEngine#run()} method, decide when the offsets
 		 * should be committed into the {@link OffsetBackingStore}.
 		 * @param policy
 		 * @return this builder object so methods can be chained together; never null
@@ -407,17 +496,17 @@ public final class SpringEmbeddedEngine implements Runnable {
 		Builder offsetBackingStore(OffsetBackingStore offsetBackingStore);
 
 		/**
-		 * Build a new sourceConnector with the information previously supplied to this builder.
+		 * Build a new connector with the information previously supplied to this builder.
 		 *
-		 * @return the embedded sourceConnector; never null
+		 * @return the embedded connector; never null
 		 * @throws IllegalArgumentException if a {@link #using(Configuration) configuration} or {@link #notifying(Consumer)
 		 *             consumer function} were not supplied before this method is called
 		 */
-		SpringEmbeddedEngine build();
+		EmbeddedEngine build();
 	}
 
 	/**
-	 * Obtain a new {@link Builder} instance that can be used to construct runnable {@link SpringEmbeddedEngine} instances.
+	 * Obtain a new {@link Builder} instance that can be used to construct runnable {@link EmbeddedEngine} instances.
 	 *
 	 * @return the new builder; never null
 	 */
@@ -426,7 +515,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 			private OffsetBackingStore offsetBackingStore;
 			private SourceConnector sourceConnector;
 			private Configuration config;
-			private Consumer<SourceRecord> consumer;
+			private ChangeConsumer handler;
 			private ClassLoader classLoader;
 			private Clock clock;
 			private CompletionCallback completionCallback;
@@ -471,7 +560,13 @@ public final class SpringEmbeddedEngine implements Runnable {
 
 			@Override
 			public Builder notifying(Consumer<SourceRecord> consumer) {
-				this.consumer = consumer;
+				this.handler = buildDefaultChangeConsumer(consumer);
+				return this;
+			}
+
+			@Override
+			public Builder notifying(ChangeConsumer handler) {
+				this.handler = handler;
 				return this;
 			}
 
@@ -488,16 +583,13 @@ public final class SpringEmbeddedEngine implements Runnable {
 			}
 
 			@Override
-			public SpringEmbeddedEngine build() {
+			public EmbeddedEngine build() {
 				if (classLoader == null) classLoader = getClass().getClassLoader();
 				if (clock == null) clock = Clock.system();
-				Objects.requireNonNull(config, "A sourceConnector configuration must be specified.");
-				Objects.requireNonNull(consumer, "A sourceConnector consumer must be specified.");
-				Objects.requireNonNull(sourceConnector, "A source connector must be specified.");
-				Objects.requireNonNull(offsetBackingStore, "A offset backing store must be specified.");
-
-				return new SpringEmbeddedEngine(config, classLoader, clock,
-						consumer, completionCallback, connectorCallback, offsetCommitPolicy, sourceConnector, offsetBackingStore);
+				Objects.requireNonNull(config, "A connector configuration must be specified.");
+				Objects.requireNonNull(handler, "A connector consumer or changeHandler must be specified.");
+				return new EmbeddedEngine(config, classLoader, clock,
+						handler, completionCallback, connectorCallback, offsetCommitPolicy, sourceConnector, offsetBackingStore);
 			}
 
 		};
@@ -507,7 +599,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 	private final Configuration config;
 	private final Clock clock;
 	private final ClassLoader classLoader;
-	private final Consumer<SourceRecord> consumer;
+	private final ChangeConsumer handler;
 	private final CompletionCallback completionCallback;
 	private final ConnectorCallback connectorCallback;
 	private final AtomicReference<Thread> runningThread = new AtomicReference<>();
@@ -522,13 +614,13 @@ public final class SpringEmbeddedEngine implements Runnable {
 	private SourceConnector connector;
 	private OffsetBackingStore offsetStore;
 
-	private SpringEmbeddedEngine(Configuration config, ClassLoader classLoader, Clock clock,
-			Consumer<SourceRecord> consumer, CompletionCallback completionCallback, ConnectorCallback connectorCallback,
+	private EmbeddedEngine(Configuration config, ClassLoader classLoader, Clock clock, ChangeConsumer handler,
+			CompletionCallback completionCallback, ConnectorCallback connectorCallback,
 			OffsetCommitPolicy offsetCommitPolicy, SourceConnector sourceConnector, OffsetBackingStore offsetStore) {
 		this.connector = sourceConnector;
 		this.offsetStore = offsetStore;
 		this.config = config;
-		this.consumer = consumer;
+		this.handler = handler;
 		this.classLoader = classLoader;
 		this.clock = clock;
 		this.completionCallback = completionCallback != null ? completionCallback : (success, msg, error) -> {
@@ -539,7 +631,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 		this.offsetCommitPolicy = offsetCommitPolicy;
 
 		assert this.config != null;
-		assert this.consumer != null;
+		assert this.handler != null;
 		assert this.classLoader != null;
 		assert this.clock != null;
 		keyConverter = config.getInstance(INTERNAL_KEY_CONVERTER_CLASS, Converter.class, () -> this.classLoader);
@@ -561,7 +653,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 	}
 
 	/**
-	 * Determine if this embedded sourceConnector is currently running.
+	 * Determine if this embedded connector is currently running.
 	 *
 	 * @return {@code true} if running, or {@code false} otherwise
 	 */
@@ -579,28 +671,28 @@ public final class SpringEmbeddedEngine implements Runnable {
 			logger.error(msg, error);
 			return;
 		}
-		// don't use the completion store here because we want to store the error and message only
+		// don't use the completion callback here because we want to store the error and message only
 		completionResult.handle(false, msg, error);
 	}
 
 	private void succeed(String msg) {
-		// don't use the completion store here because we want to store the error and message only
+		// don't use the completion callback here because we want to store the error and message only
 		completionResult.handle(true, msg, null);
 	}
 
 	/**
-	 * Run this embedded sourceConnector and deliver database changes to the registered {@link Consumer}. This method blocks until
-	 * the sourceConnector is stopped.
+	 * Run this embedded connector and deliver database changes to the registered {@link Consumer}. This method blocks until
+	 * the connector is stopped.
 	 * <p>
 	 * First, the method checks to see if this instance is currently {@link #run() running}, and if so immediately returns.
 	 * <p>
-	 * If the configuration is valid, this method starts the sourceConnector and starts polling the sourceConnector for change events.
-	 * All messages are delivered in batches to the {@link Consumer} registered with this embedded sourceConnector. The batch size,
+	 * If the configuration is valid, this method starts the connector and starts polling the connector for change events.
+	 * All messages are delivered in batches to the {@link Consumer} registered with this embedded connector. The batch size,
 	 * polling
-	 * frequency, and other parameters are controlled via configuration settings. This continues until this sourceConnector is
+	 * frequency, and other parameters are controlled via configuration settings. This continues until this connector is
 	 * {@link #stop() stopped}.
 	 * <p>
-	 * Note that there are two ways to stop a sourceConnector running on a thread: calling {@link #stop()} from another thread, or
+	 * Note that there are two ways to stop a connector running on a thread: calling {@link #stop()} from another thread, or
 	 * interrupting the thread (e.g., via {@link ExecutorService#shutdownNow()}).
 	 * <p>
 	 * This method can be called repeatedly as needed.
@@ -610,35 +702,37 @@ public final class SpringEmbeddedEngine implements Runnable {
 		if (runningThread.compareAndSet(null, Thread.currentThread())) {
 
 			final String engineName = config.getString(ENGINE_NAME);
-//			final String connectorClassName = config.getString(CONNECTOR_CLASS);
+			final String connectorClassName = config.getString(CONNECTOR_CLASS);
 			final Optional<ConnectorCallback> connectorCallback = Optional.ofNullable(this.connectorCallback);
 			// Only one thread can be in this part of the method at a time ...
 			latch.countUp();
 			try {
 				if (!config.validateAndRecord(CONNECTOR_FIELDS, logger::error)) {
-					fail("Failed to start sourceConnector with invalid configuration (see logs for actual errors)");
+					fail("Failed to start connector with invalid configuration (see logs for actual errors)");
 					return;
 				}
 
-				// Instantiate the sourceConnector ...
+				// Instantiate the connector ...
 				//SourceConnector connector = null;
 				//try {
 				//	@SuppressWarnings("unchecked")
 				//	Class<? extends SourceConnector> connectorClass = (Class<SourceConnector>) classLoader.loadClass(connectorClassName);
 				//	connector = connectorClass.newInstance();
-				//} catch (Throwable t) {
-				//	fail("Unable to instantiate sourceConnector class '" + connectorClassName + "'", t);
+				//}
+				//catch (Throwable t) {
+				//	fail("Unable to instantiate connector class '" + connectorClassName + "'", t);
 				//	return;
 				//}
-
-				// Instantiate the offset store ...
+				//
+				//// Instantiate the offset store ...
 				//final String offsetStoreClassName = config.getString(OFFSET_STORAGE);
 				//OffsetBackingStore offsetStore = null;
 				//try {
 				//	@SuppressWarnings("unchecked")
 				//	Class<? extends OffsetBackingStore> offsetStoreClass = (Class<OffsetBackingStore>) classLoader.loadClass(offsetStoreClassName);
 				//	offsetStore = offsetStoreClass.newInstance();
-				//} catch (Throwable t) {
+				//}
+				//catch (Throwable t) {
 				//	fail("Unable to instantiate OffsetBackingStore class '" + offsetStoreClassName + "'", t);
 				//	return;
 				//}
@@ -647,17 +741,18 @@ public final class SpringEmbeddedEngine implements Runnable {
 				try {
 					offsetStore.configure(workerConfig);
 					offsetStore.start();
-				} catch (Throwable t) {
+				}
+				catch (Throwable t) {
 					fail("Unable to configure and start the '" + offsetStore.getClass().getName() + "' offset backing store", t);
 					return;
 				}
 
 				// Set up the offset commit policy ...
 				if (offsetCommitPolicy == null) {
-					offsetCommitPolicy = config.getInstance(SpringEmbeddedEngine.OFFSET_COMMIT_POLICY, OffsetCommitPolicy.class, config);
+					offsetCommitPolicy = config.getInstance(EmbeddedEngine.OFFSET_COMMIT_POLICY, OffsetCommitPolicy.class, config);
 				}
 
-				// Initialize the sourceConnector using a context that does NOT respond to requests to reconfigure tasks ...
+				// Initialize the connector using a context that does NOT respond to requests to reconfigure tasks ...
 				ConnectorContext context = new ConnectorContext() {
 
 					@Override
@@ -672,15 +767,14 @@ public final class SpringEmbeddedEngine implements Runnable {
 
 				};
 				connector.initialize(context);
-
 				OffsetStorageWriter offsetWriter = new OffsetStorageWriter(offsetStore, engineName,
 						keyConverter, valueConverter);
 				OffsetStorageReader offsetReader = new OffsetStorageReaderImpl(offsetStore, engineName,
 						keyConverter, valueConverter);
-				long commitTimeoutMs = config.getLong(OFFSET_COMMIT_TIMEOUT_MS);
+				Duration commitTimeout = Duration.ofMillis(config.getLong(OFFSET_COMMIT_TIMEOUT_MS));
 
 				try {
-					// Start the sourceConnector with the given properties and get the task configurations ...
+					// Start the connector with the given properties and get the task configurations ...
 					connector.start(config.asMap());
 					connectorCallback.ifPresent(ConnectorCallback::connectorStarted);
 					List<Map<String, String>> taskConfigs = connector.taskConfigs(1);
@@ -688,8 +782,9 @@ public final class SpringEmbeddedEngine implements Runnable {
 					SourceTask task = null;
 					try {
 						task = (SourceTask) taskClass.newInstance();
-					} catch (IllegalAccessException | InstantiationException t) {
-						fail("Unable to instantiate sourceConnector's task class '" + taskClass.getName() + "'", t);
+					}
+					catch (IllegalAccessException | InstantiationException t) {
+						fail("Unable to instantiate connector's task class '" + taskClass.getName() + "'", t);
 						return;
 					}
 					try {
@@ -699,6 +794,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 								return offsetReader;
 							}
 
+							@Override
 							public Map<String, String> configs() {
 								// TODO Auto-generated method stub
 								return null;
@@ -707,10 +803,11 @@ public final class SpringEmbeddedEngine implements Runnable {
 						task.initialize(taskContext);
 						task.start(taskConfigs.get(0));
 						connectorCallback.ifPresent(ConnectorCallback::taskStarted);
-					} catch (Throwable t) {
+					}
+					catch (Throwable t) {
 						// Mask the passwords ...
 						Configuration config = Configuration.from(taskConfigs.get(0)).withMaskedPasswords();
-						String msg = "Unable to initialize and start sourceConnector's task class '" + taskClass.getName() + "' with config: "
+						String msg = "Unable to initialize and start connector's task class '" + taskClass.getName() + "' with config: "
 								+ config;
 						fail(msg, t);
 						return;
@@ -720,69 +817,46 @@ public final class SpringEmbeddedEngine implements Runnable {
 					Throwable handlerError = null;
 					try {
 						timeOfLastCommitMillis = clock.currentTimeInMillis();
-						boolean keepProcessing = true;
 						List<SourceRecord> changeRecords = null;
-						while (runningThread.get() != null && handlerError == null && keepProcessing) {
+						RecordCommitter committer = buildRecordCommitter(offsetWriter, task, commitTimeout);
+						while (runningThread.get() != null) {
 							try {
-								try {
-									logger.debug("Embedded engine is polling task for records on thread " + runningThread.get());
-									changeRecords = task.poll(); // blocks until there are values ...
-									logger.debug("Embedded engine returned from polling task for records");
-								} catch (InterruptedException e) {
-									// Interrupted while polling ...
-									logger.debug("Embedded engine interrupted on thread " + runningThread.get() + " while polling the task for records");
-									Thread.interrupted();
-									break;
-								}
-								try {
-									if (changeRecords != null && !changeRecords.isEmpty()) {
-										logger.debug("Received {} records from the task", changeRecords.size());
+								logger.debug("Embedded engine is polling task for records on thread " + runningThread.get());
+								changeRecords = task.poll(); // blocks until there are values ...
+								logger.debug("Embedded engine returned from polling task for records");
+							}
+							catch (InterruptedException e) {
+								// Interrupted while polling ...
+								logger.debug("Embedded engine interrupted on thread " + runningThread.get() + " while polling the task for records");
+								Thread.interrupted();
+								break;
+							}
+							try {
+								if (changeRecords != null && !changeRecords.isEmpty()) {
+									logger.debug("Received {} records from the task", changeRecords.size());
 
-										// First forward the records to the sourceConnector's consumer ...
-										for (SourceRecord record : changeRecords) {
-											try {
-												consumer.accept(record);
-												task.commitRecord(record);
-											} catch (StopConnectorException e) {
-												keepProcessing = false;
-												// Stop processing any more but first record the offset for this record's
-												// partition
-												offsetWriter.offset(record.sourcePartition(), record.sourceOffset());
-												recordsSinceLastCommit += 1;
-												break;
-											} catch (Throwable t) {
-												handlerError = t;
-												break;
-											}
-
-											// Record the offset for this record's partition
-											offsetWriter.offset(record.sourcePartition(), record.sourceOffset());
-											recordsSinceLastCommit += 1;
-										}
-
-										// Flush the offsets to storage if necessary ...
-										maybeFlush(offsetWriter, offsetCommitPolicy, commitTimeoutMs, task);
-									} else {
-										logger.debug("Received no records from the task");
+									try {
+										handler.handleBatch(changeRecords, committer);
 									}
-								} catch (Throwable t) {
-									// There was some sort of unexpected exception, so we should stop work
-									if (handlerError == null) {
-										// make sure we capture the error first so that we can report it later
-										handlerError = t;
+									catch (StopConnectorException e) {
+										break;
 									}
-									break;
 								}
-							} finally {
-								// then try to commit the offsets, since we record them only after the records were handled
-								// by the consumer ...
-								maybeFlush(offsetWriter, offsetCommitPolicy, commitTimeoutMs, task);
+								else {
+									logger.debug("Received no records from the task");
+								}
+							}
+							catch (Throwable t) {
+								// There was some sort of unexpected exception, so we should stop work
+								handlerError = t;
+								break;
 							}
 						}
-					} finally {
+					}
+					finally {
 						if (handlerError != null) {
 							// There was an error in the handler so make sure it's always captured...
-							fail("Stopping sourceConnector after error in the application's handler method: " + handlerError.getMessage(),
+							fail("Stopping connector after error in the application's handler method: " + handlerError.getMessage(),
 									handlerError);
 						}
 						try {
@@ -791,39 +865,71 @@ public final class SpringEmbeddedEngine implements Runnable {
 							task.stop();
 							connectorCallback.ifPresent(ConnectorCallback::taskStopped);
 							// Always commit offsets that were captured from the source records we actually processed ...
-							commitOffsets(offsetWriter, commitTimeoutMs, task);
+							commitOffsets(offsetWriter, commitTimeout, task);
 							if (handlerError == null) {
 								// We stopped normally ...
-								succeed("Connector '" + connector.getClass().getName() + "' completed normally.");
+								succeed("Connector '" + connectorClassName + "' completed normally.");
 							}
-						} catch (Throwable t) {
+						}
+						catch (Throwable t) {
 							fail("Error while trying to stop the task and commit the offsets", t);
 						}
 					}
-				} catch (Throwable t) {
-					fail("Error while trying to run sourceConnector class '" + connector.getClass().getName() + "'", t);
-				} finally {
-					// Close the offset storage and finally the sourceConnector ...
+				}
+				catch (Throwable t) {
+					fail("Error while trying to run connector class '" + connectorClassName + "'", t);
+				}
+				finally {
+					// Close the offset storage and finally the connector ...
 					try {
 						offsetStore.stop();
-					} catch (Throwable t) {
+					}
+					catch (Throwable t) {
 						fail("Error while trying to stop the offset store", t);
-					} finally {
+					}
+					finally {
 						try {
 							connector.stop();
 							connectorCallback.ifPresent(ConnectorCallback::connectorStopped);
-						} catch (Throwable t) {
-							fail("Error while trying to stop sourceConnector class '" + connector.getClass().getName() + "'", t);
+						}
+						catch (Throwable t) {
+							fail("Error while trying to stop connector class '" + connectorClassName + "'", t);
 						}
 					}
 				}
-			} finally {
+			}
+			finally {
 				latch.countDown();
 				runningThread.set(null);
-				// after we've "shut down" the engine, fire the completion store based on the results we collected
+				// after we've "shut down" the engine, fire the completion callback based on the results we collected
 				completionCallback.handle(completionResult.success(), completionResult.message(), completionResult.error());
 			}
 		}
+	}
+
+	/**
+	 * Creates a new RecordCommitter that is responsible for informing the engine
+	 * about the updates to the given batch
+	 * @param offsetWriter the offsetWriter current in use
+	 * @param task the sourcetask
+	 * @param commitTimeout the time in ms until a commit times out
+	 * @return the new recordCommitter to be used for a given batch
+	 */
+	protected RecordCommitter buildRecordCommitter(OffsetStorageWriter offsetWriter, SourceTask task, Duration commitTimeout) {
+		return new RecordCommitter() {
+
+			@Override
+			public synchronized void markProcessed(SourceRecord record) throws InterruptedException {
+				task.commitRecord(record);
+				recordsSinceLastCommit += 1;
+				offsetWriter.offset(record.sourcePartition(), record.sourceOffset());
+			}
+
+			@Override
+			public synchronized void markBatchFinished() {
+				maybeFlush(offsetWriter, offsetCommitPolicy, commitTimeout, task);
+			}
+		};
 	}
 
 	/**
@@ -831,15 +937,15 @@ public final class SpringEmbeddedEngine implements Runnable {
 	 *
 	 * @param offsetWriter the offset storage writer; may not be null
 	 * @param policy the offset commit policy; may not be null
-	 * @param commitTimeoutMs the timeout to wait for commit results
+	 * @param commitTimeout the timeout to wait for commit results
 	 * @param task the task which produced the records for which the offsets have been committed
 	 */
-	protected void maybeFlush(OffsetStorageWriter offsetWriter, OffsetCommitPolicy policy, long commitTimeoutMs,
+	protected void maybeFlush(OffsetStorageWriter offsetWriter, OffsetCommitPolicy policy, Duration commitTimeout,
 			SourceTask task) {
 		// Determine if we need to commit to offset storage ...
 		long timeSinceLastCommitMillis = clock.currentTimeInMillis() - timeOfLastCommitMillis;
 		if (policy.performCommit(recordsSinceLastCommit, Duration.ofMillis(timeSinceLastCommitMillis))) {
-			commitOffsets(offsetWriter, commitTimeoutMs, task);
+			commitOffsets(offsetWriter, commitTimeout, task);
 		}
 	}
 
@@ -847,12 +953,12 @@ public final class SpringEmbeddedEngine implements Runnable {
 	 * Flush offsets to storage.
 	 *
 	 * @param offsetWriter the offset storage writer; may not be null
-	 * @param commitTimeoutMs the timeout to wait for commit results
+	 * @param commitTimeout the timeout to wait for commit results
 	 * @param task the task which produced the records for which the offsets have been committed
 	 */
-	protected void commitOffsets(OffsetStorageWriter offsetWriter, long commitTimeoutMs, SourceTask task) {
+	protected void commitOffsets(OffsetStorageWriter offsetWriter, Duration commitTimeout, SourceTask task) {
 		long started = clock.currentTimeInMillis();
-		long timeout = started + commitTimeoutMs;
+		long timeout = started + commitTimeout.toMillis();
 		if (!offsetWriter.beginFlush()) return;
 		Future<Void> flush = offsetWriter.doFlush(this::completedFlush);
 		if (flush == null) return; // no offsets to commit ...
@@ -864,13 +970,16 @@ public final class SpringEmbeddedEngine implements Runnable {
 			task.commit();
 			recordsSinceLastCommit = 0;
 			timeOfLastCommitMillis = clock.currentTimeInMillis();
-		} catch (InterruptedException e) {
+		}
+		catch (InterruptedException e) {
 			logger.warn("Flush of {} offsets interrupted, cancelling", this);
 			offsetWriter.cancelFlush();
-		} catch (ExecutionException e) {
+		}
+		catch (ExecutionException e) {
 			logger.error("Flush of {} offsets threw an unexpected exception: ", this, e);
 			offsetWriter.cancelFlush();
-		} catch (TimeoutException e) {
+		}
+		catch (TimeoutException e) {
 			logger.error("Timed out waiting to flush {} offsets to storage", this);
 			offsetWriter.cancelFlush();
 		}
@@ -879,16 +988,17 @@ public final class SpringEmbeddedEngine implements Runnable {
 	protected void completedFlush(Throwable error, Void result) {
 		if (error != null) {
 			logger.error("Failed to flush {} offsets to storage: ", this, error);
-		} else {
+		}
+		else {
 			logger.trace("Finished flushing {} offsets to storage", this);
 		}
 	}
 
 	/**
-	 * Stop the execution of this embedded sourceConnector. This method does not block until the sourceConnector is stopped; use
+	 * Stop the execution of this embedded connector. This method does not block until the connector is stopped; use
 	 * {@link #await(long, TimeUnit)} for this purpose.
 	 *
-	 * @return {@code true} if the sourceConnector was {@link #run() running} and will eventually stop, or {@code false} if it was not
+	 * @return {@code true} if the connector was {@link #run() running} and will eventually stop, or {@code false} if it was not
 	 *         running when this method is called
 	 * @see #await(long, TimeUnit)
 	 */
@@ -897,6 +1007,11 @@ public final class SpringEmbeddedEngine implements Runnable {
 		// Signal that the run() method should stop ...
 		Thread thread = this.runningThread.getAndSet(null);
 		if (thread != null) {
+			try {
+				latch.await(Integer.parseInt(System.getProperty(WAIT_FOR_COMPLETION_BEFORE_INTERRUPT_PROP, Long.toString(WAIT_FOR_COMPLETION_BEFORE_INTERRUPT_DEFAULT.toMillis()))), TimeUnit.MILLISECONDS);
+			}
+			catch (InterruptedException e) {
+			}
 			logger.debug("Interruping the embedded engine's thread " + thread + " (already interrupted: " + thread.isInterrupted() + ")");
 			// Interrupt the thread in case it is blocked while polling the task for records ...
 			thread.interrupt();
@@ -906,15 +1021,15 @@ public final class SpringEmbeddedEngine implements Runnable {
 	}
 
 	/**
-	 * Wait for the sourceConnector to complete processing. If the processor is not running, this method returns immediately; however,
+	 * Wait for the connector to complete processing. If the processor is not running, this method returns immediately; however,
 	 * if the processor is {@link #stop() stopped} and restarted before this method is called, this method will return only
 	 * when it completes the second time.
 	 *
 	 * @param timeout the maximum amount of time to wait before returning
 	 * @param unit the unit of time; may not be null
-	 * @return {@code true} if the sourceConnector completed within the timeout (or was not running), or {@code false} if it is still
+	 * @return {@code true} if the connector completed within the timeout (or was not running), or {@code false} if it is still
 	 *         running when the timeout occurred
-	 * @throws InterruptedException if this thread is interrupted while waiting for the completion of the sourceConnector
+	 * @throws InterruptedException if this thread is interrupted while waiting for the completion of the connector
 	 */
 	public boolean await(long timeout, TimeUnit unit) throws InterruptedException {
 		return latch.await(timeout, unit);
@@ -922,7 +1037,7 @@ public final class SpringEmbeddedEngine implements Runnable {
 
 	@Override
 	public String toString() {
-		return "SpringEmbeddedEngine{id=" + config.getString(ENGINE_NAME) + '}';
+		return "EmbeddedEngine{id=" + config.getString(ENGINE_NAME) + '}';
 	}
 
 	protected static class EmbeddedConfig extends WorkerConfig {

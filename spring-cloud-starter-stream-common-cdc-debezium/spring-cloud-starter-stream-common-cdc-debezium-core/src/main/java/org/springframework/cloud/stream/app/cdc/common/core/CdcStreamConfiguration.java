@@ -47,7 +47,7 @@ public class CdcStreamConfiguration {
 	private static final Log logger = LogFactory.getLog(CdcStreamConfiguration.class);
 
 	@Bean
-	public Consumer<FluxSink<Message<byte[]>>> engine(SpringEmbeddedEngine.Builder embeddedEngineBuilder,
+	public Consumer<FluxSink<Message<byte[]>>> engine(EmbeddedEngine.Builder embeddedEngineBuilder,
 			Function<SourceRecord, byte[]> valueSerializer, Function<SourceRecord, byte[]> keySerializer,
 			Function<SourceRecord, SourceRecord> recordFlattering,
 			ObjectMapper mapper, CdcStreamProperties cdcStreamingEngineProperties) {
@@ -79,7 +79,7 @@ public class CdcStreamConfiguration {
 				emitter.next(messageBuilder.build());
 			};
 
-			SpringEmbeddedEngine engine = embeddedEngineBuilder
+			EmbeddedEngine engine = embeddedEngineBuilder
 					.notifying(record -> messageConsumer.accept(recordFlattering.apply(record)))
 					.build();
 

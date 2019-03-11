@@ -89,7 +89,7 @@ public class CdcCommonConfiguration {
 	}
 
 	@Bean
-	public SpringEmbeddedEngine.Builder embeddedEngineBuilder(CdcCommonProperties properties,
+	public EmbeddedEngine.Builder embeddedEngineBuilder(CdcCommonProperties properties,
 			SourceConnector sourceConnector, OffsetBackingStore offsetBackingStore) {
 
 		if (!properties.getConfig().containsKey("connector.class")) {
@@ -116,7 +116,7 @@ public class CdcCommonConfiguration {
 			properties.getConfig().put("offset.storage", properties.getOffset().getStorage().offsetStorageClass);
 		}
 
-		return SpringEmbeddedEngine.create()
+		return EmbeddedEngine.create()
 				.using(io.debezium.config.Configuration.from(properties.getConfig()))
 				.sourceConnector(sourceConnector)
 				.offsetBackingStore(offsetBackingStore);

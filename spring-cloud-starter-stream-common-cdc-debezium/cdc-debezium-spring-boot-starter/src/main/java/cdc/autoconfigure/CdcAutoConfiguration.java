@@ -30,7 +30,7 @@ import org.apache.kafka.connect.source.SourceRecord;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.cloud.stream.app.cdc.common.core.CdcCommonConfiguration;
-import org.springframework.cloud.stream.app.cdc.common.core.SpringEmbeddedEngine;
+import org.springframework.cloud.stream.app.cdc.common.core.EmbeddedEngine;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -51,10 +51,10 @@ public class CdcAutoConfiguration {
 	}
 
 	@Bean
-	public EmbeddedEngineExecutorService embeddedEngine(SpringEmbeddedEngine.Builder embeddedEngineBuilder,
+	public EmbeddedEngineExecutorService embeddedEngine(EmbeddedEngine.Builder embeddedEngineBuilder,
 			Consumer<SourceRecord> sourceRecordConsumer, Function<SourceRecord, SourceRecord> recordFlattering) {
 
-		SpringEmbeddedEngine embeddedEngine = embeddedEngineBuilder
+		EmbeddedEngine embeddedEngine = embeddedEngineBuilder
 				.notifying(sourceRecord -> sourceRecordConsumer.accept(recordFlattering.apply(sourceRecord)))
 				.build();
 
@@ -64,10 +64,10 @@ public class CdcAutoConfiguration {
 
 	private static class EmbeddedEngineExecutorService implements Closeable {
 
-		private SpringEmbeddedEngine engine;
+		private EmbeddedEngine engine;
 		private ExecutorService executor;
 
-		private EmbeddedEngineExecutorService(SpringEmbeddedEngine engine) {
+		private EmbeddedEngineExecutorService(EmbeddedEngine engine) {
 			this.engine = engine;
 			this.executor = Executors.newSingleThreadExecutor();
 		}
