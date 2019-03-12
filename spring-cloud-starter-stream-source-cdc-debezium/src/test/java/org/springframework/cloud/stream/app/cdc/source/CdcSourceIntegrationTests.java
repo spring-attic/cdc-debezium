@@ -42,6 +42,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @SpringBootTest(
 		webEnvironment = SpringBootTest.WebEnvironment.NONE,
 		properties = {
+				"spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration",
 				"cdc.name=my-sql-connector",
 				"cdc.schema=false",
 				"cdc.config.database.history=io.debezium.relational.history.MemoryDatabaseHistory",
@@ -141,6 +142,7 @@ public abstract class CdcSourceIntegrationTests {
 	public static class CdcSqlServerTests extends CdcSourceIntegrationTests {
 
 		@Test
+		@Ignore
 		public void testOne() throws InterruptedException {
 
 			Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
@@ -170,6 +172,7 @@ public abstract class CdcSourceIntegrationTests {
 	public static class CdcSqlMongoDbTests extends CdcSourceIntegrationTests {
 
 		@Test
+		@Ignore
 		public void testOne() throws InterruptedException {
 
 			Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
