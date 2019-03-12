@@ -23,7 +23,6 @@ import io.debezium.transforms.UnwrapFromEnvelope;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.kafka.connect.json.JsonConverter;
-import org.apache.kafka.connect.source.SourceConnector;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.storage.Converter;
 import org.apache.kafka.connect.storage.OffsetBackingStore;
@@ -39,7 +38,7 @@ import org.springframework.context.annotation.Import;
  */
 @Configuration
 @EnableConfigurationProperties({ CdcCommonProperties.class })
-@Import({ CdcConnectorConfiguration.class, CdcOffsetBackingStoreConfiguration.class })
+@Import({ CdcOffsetBackingStoreConfiguration.class })
 public class CdcCommonConfiguration {
 
 	private static final Log logger = LogFactory.getLog(CdcCommonConfiguration.class);
@@ -90,7 +89,7 @@ public class CdcCommonConfiguration {
 
 	@Bean
 	public EmbeddedEngine.Builder embeddedEngineBuilder(CdcCommonProperties properties,
-			SourceConnector sourceConnector, OffsetBackingStore offsetBackingStore) {
+			OffsetBackingStore offsetBackingStore) {
 
 		if (!properties.getConfig().containsKey("connector.class")) {
 			properties.getConfig().put("connector.class", properties.getConnector().connectorClass);
@@ -118,7 +117,6 @@ public class CdcCommonConfiguration {
 
 		return EmbeddedEngine.create()
 				.using(io.debezium.config.Configuration.from(properties.getConfig()))
-				.sourceConnector(sourceConnector)
 				.offsetBackingStore(offsetBackingStore);
 	}
 

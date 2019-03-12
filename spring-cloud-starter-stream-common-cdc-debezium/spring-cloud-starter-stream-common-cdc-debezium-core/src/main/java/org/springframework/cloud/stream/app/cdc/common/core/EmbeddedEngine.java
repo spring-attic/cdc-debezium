@@ -713,17 +713,17 @@ public final class EmbeddedEngine implements Runnable {
 				}
 
 				// Instantiate the connector ...
-				//SourceConnector connector = null;
-				//try {
-				//	@SuppressWarnings("unchecked")
-				//	Class<? extends SourceConnector> connectorClass = (Class<SourceConnector>) classLoader.loadClass(connectorClassName);
-				//	connector = connectorClass.newInstance();
-				//}
-				//catch (Throwable t) {
-				//	fail("Unable to instantiate connector class '" + connectorClassName + "'", t);
-				//	return;
-				//}
-				//
+				SourceConnector connector = null;
+				try {
+					@SuppressWarnings("unchecked")
+					Class<? extends SourceConnector> connectorClass = (Class<SourceConnector>) classLoader.loadClass(connectorClassName);
+					connector = connectorClass.newInstance();
+				}
+				catch (Throwable t) {
+					fail("Unable to instantiate connector class '" + connectorClassName + "'", t);
+					return;
+				}
+
 				//// Instantiate the offset store ...
 				//final String offsetStoreClassName = config.getString(OFFSET_STORAGE);
 				//OffsetBackingStore offsetStore = null;

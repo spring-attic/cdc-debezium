@@ -275,10 +275,18 @@ cdc.config.database.port=1433 # <4>
 
 You can run also the `CdcSourceIntegrationTests#CdcSqlServerTests` using this mysql configuration.
 
-==== Oracle (incubator)
+==== Oracle
+
+Start Oracle reachable from localhost and set up with the configuration, users and grants described in the https://github.com/debezium/oracle-vagrant-box[Debezium Vagrant set-up]
+
+Populate with sample data form Debezium's Oracle tutorial:
+[source, bash]
+----
+wget https://raw.githubusercontent.com/debezium/debezium-examples/master/tutorial/debezium-with-oracle-jdbc/init/inventory.sql
+cat ./inventory.sql | docker exec -i dbz_oracle sqlplus debezium/dbz@//localhost:1521/ORCLPDB1
+----
 
 TODO
-
 
 == Examples
 
