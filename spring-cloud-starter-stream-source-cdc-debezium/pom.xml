@@ -138,7 +138,7 @@
 					<images>
 						<image>
 							<alias>mysql</alias>
-							<name>debezium/example-mysql:0.9</name>
+							<name>debezium/example-mysql:0.10</name>
 							<run>
 								<env>
 									<MYSQL_ROOT_PASSWORD>debezium</MYSQL_ROOT_PASSWORD>
@@ -171,6 +171,33 @@
 								</wait>
 							</run>
 						</image>
+						<image>
+							<external>
+								<type>properties</type>
+								<prefix>docker</prefix>
+								<mode>override</mode>
+							</external>
+							<name>%a/sqlserver-example:${project.version}</name>
+							<build>
+								<dockerFileDir>${project.basedir}/src/test/docker/sqlserver</dockerFileDir>
+								<filter>@</filter>
+							</build>
+							<run>
+								<env>
+									<ACCEPT_EULA>Y</ACCEPT_EULA>
+									<MSSQL_PID>Standard</MSSQL_PID>
+									<SA_PASSWORD>Password!</SA_PASSWORD>
+									<MSSQL_AGENT_ENABLED>true</MSSQL_AGENT_ENABLED>
+								</env>
+								<ports>
+									<port>1433:1433</port>
+								</ports>
+								<wait>
+									<log>1 rows affected</log>
+									<time>40000</time>
+								</wait>
+							</run>
+						</image>
 					</images>
 				</configuration>
 				<executions>
@@ -179,6 +206,7 @@
 						<!--<phase>pre-integration-test</phase>-->
 						<phase>generate-test-resources</phase>
 						<goals>
+							<goal>build</goal>
 							<goal>start</goal>
 						</goals>
 					</execution>

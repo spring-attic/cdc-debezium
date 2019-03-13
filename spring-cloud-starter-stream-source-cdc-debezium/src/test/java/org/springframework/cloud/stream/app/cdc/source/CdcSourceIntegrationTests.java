@@ -142,7 +142,6 @@ public abstract class CdcSourceIntegrationTests {
 	public static class CdcSqlServerTests extends CdcSourceIntegrationTests {
 
 		@Test
-		@Ignore
 		public void testOne() throws InterruptedException {
 
 			Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
