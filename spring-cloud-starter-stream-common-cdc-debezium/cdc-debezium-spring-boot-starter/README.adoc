@@ -1,7 +1,9 @@
 //tag::ref-doc[]
 = Debezium Spring Boot Starter
 
-Convenience starter for https://debezium.io[Debezium] integrating  in Spring Boot applications.
+Spring Boot Starter for easy integration of https://debezium.io[Debezium] in Spring Boot applications.
+
+To use it you just add the `cdc-debezium-spring-boot-starter` dependency to your application POM and implement your own `Consumer<SourceRecord>` handler to process the incoming database change events. Follow the link below for further instructions.
 
 https://en.wikipedia.org/wiki/Change_data_capture[Change Data Capture] (CDC) Spring Boot Starter that allows capturing change events from various databases including `MySQL`, `PostgreSQL`, `MongoDB`, `Oracle` and `SQL Server`.
 
