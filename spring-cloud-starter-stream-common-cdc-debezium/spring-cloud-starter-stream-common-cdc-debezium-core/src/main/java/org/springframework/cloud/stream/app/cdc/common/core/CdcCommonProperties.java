@@ -23,6 +23,7 @@ import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
+import io.debezium.connector.mongodb.MongoDbConnector;
 import io.debezium.connector.mysql.MySqlConnector;
 import io.debezium.connector.oracle.OracleConnector;
 import io.debezium.connector.postgresql.PostgresConnector;
@@ -174,7 +175,7 @@ public class CdcCommonProperties {
 	public enum ConnectorType {
 		mysql(MySqlConnector.class.getName()),
 		postgres(PostgresConnector.class.getName()),
-		mongodb(CdcConnectorConfiguration.MongodbSourceConnector.class.getName()),
+		mongodb(MongoDbConnector.class.getName()),
 		oracle(OracleConnector.class.getName()),
 		sqlserver(SqlServerConnector.class.getName());
 

@@ -133,9 +133,49 @@
 			<plugin>
 				<groupId>io.fabric8</groupId>
 				<artifactId>docker-maven-plugin</artifactId>
-				<version>0.28.0</version>
+				<version>0.29.0</version>
 				<configuration>
 					<images>
+<!--						<image>-->
+<!--							<alias>test-mongodb2</alias>-->
+<!--							<name>%a/example-mongodb:${project.version}</name>-->
+<!--							<build>-->
+<!--								<dockerFileDir>${project.basedir}/src/test/docker/mongodb</dockerFileDir>-->
+<!--								<filter>@</filter>-->
+<!--							</build>-->
+<!--							<run>-->
+<!--								<hostname>localhost</hostname>-->
+<!--								<env>-->
+<!--									<MONGODB_USER>debezium</MONGODB_USER>-->
+<!--									<MONGODB_PASSWORD>dbz</MONGODB_PASSWORD>-->
+<!--								</env>-->
+<!--								<ports>-->
+<!--									<port>27017:27017</port>-->
+<!--								</ports>-->
+<!--								<wait>-->
+<!--									<log>port: 3306</log>-->
+<!--									<time>300000</time>-->
+<!--								</wait>-->
+<!--							</run>-->
+<!--						</image>-->
+						<!--<image>-->
+							<!--<alias>test-mongodb</alias>-->
+							<!--<name>debezium/example-mongodb:0.10</name>-->
+							<!--<run>-->
+								<!--<hostname>localhost</hostname>-->
+								<!--<env>-->
+									<!--<MONGODB_USER>debezium</MONGODB_USER>-->
+									<!--<MONGODB_PASSWORD>dbz</MONGODB_PASSWORD>-->
+								<!--</env>-->
+								<!--<ports>-->
+									<!--<port>27017:27017</port>-->
+								<!--</ports>-->
+								<!--<wait>-->
+									<!--<log>port: 3306</log>-->
+									<!--<time>300000</time>-->
+								<!--</wait>-->
+							<!--</run>-->
+						<!--</image>-->
 						<image>
 							<alias>mysql</alias>
 							<name>debezium/example-mysql:0.10</name>
@@ -213,6 +253,13 @@
 					<execution>
 						<id>stop</id>
 						<phase>post-integration-test</phase>
+						<goals>
+							<goal>stop</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>stop-pre</id>
+						<phase>clean</phase>
 						<goals>
 							<goal>stop</goal>
 						</goals>

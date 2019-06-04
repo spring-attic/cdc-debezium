@@ -31,64 +31,7 @@ $$cdc.stream.header.key$$:: $$When true the source record's key data is serializ
 $$cdc.stream.header.offset$$:: $$When true the source record's offset metadata is serialized into the outbound message header under cdc.offset.$$ *($$Boolean$$, default: `$$false$$`)*
 //end::configuration-properties[]
 
-.Table Shortcut Properties Mapping
-|===
-| Shortcut | Original | Description
-
-|cdc.connector
-|cdc.config.connector.class
-|`mysql` : MySqlConnector, `postgres` : PostgresConnector, `mongodb` : MongodbSourceConnector, `oracle` : OracleConnector, `sqlserver` : SqlServerConnector
-
-|cdc.name
-|cdc.config.name
-|
-
-|cdc.offset.flush-interval
-|cdc.config.offset.flush.interval.ms
-|
-
-|cdc.offset.commit-timeout
-|cdc.config.offset.flush.timeout.ms
-|
-
-|cdc.offset.policy
-|cdc.config.offset.commit.policy
-|`periodic` : PeriodicCommitOffsetPolicy, `always` : AlwaysCommitOffsetPolicy
-
-|cdc.offset.storage
-|cdc.config.offset.storage
-|`metadata` : MetadataStoreOffsetBackingStore, `file` : FileOffsetBackingStore, `kafka` : KafkaOffsetBackingStore, `memory` : MemoryOffsetBackingStore
-
-|cdc.flattering.drop-tombstones
-|cdc.config.drop.tombstones
-|
-
-|cdc.flattering.delete-handling-mode
-|cdc.config.delete.handling.mode
-|`none` : none, `drop` : drop, `rewrite` : rewrite
-
-|===
-
-//end::ref-doc[]
-
-== Build
-
-Build involves two-stages. First build the apps and generate the binder specific app starters projects:
-```
-$ ./mvnw clean install -PgenerateApps
-```
-
-You can find the corresponding binder based projects in the `apps` subfolder. You can then cd into the apps folder:
-
-```
-$ cd apps
-```
-and build all binder projects
-```
-$ ./mvnw clean package
-```
-
-== Testing
+== Database Support
 
 The `CDC Source` is based on Debezium, which currently support the following five datastores: `MySQL`, `PostgreSQL`, `MongoDB`, `Oracle` and `SQL Server` databases.
 
@@ -286,16 +229,68 @@ wget https://raw.githubusercontent.com/debezium/debezium-examples/master/tutoria
 cat ./inventory.sql | docker exec -i dbz_oracle sqlplus debezium/dbz@//localhost:1521/ORCLPDB1
 ----
 
-TODO
+//end::ref-doc[]
 
-== Examples
+== Build
+
+Build involves two-stages. First build the apps and generate the binder specific app starters projects:
+```
+$ ./mvnw clean install -PgenerateApps
+```
+
+You can find the corresponding binder based projects in the `apps` subfolder. You can then cd into the apps folder:
 
 ```
-java -jar cdc-debezium-source.jar ... use the properties TODO
+$ cd apps
+```
+and build all binder projects
+```
+$ ./mvnw clean package
 ```
 
-And here is a example pipeline that uses cdc:
+== Run standalone
 
 ```
-cdc-stream= TODO
+java -jar cdc-debezium-source.jar --cdc.connector=mysql --cdc.name=my-sql-connector --cdc.config.database.server.id=85744 --cdc.config.database.server.name=my-app-connector --cdc.config.database.user=debezium --cdc.config.database.password=dbz --cdc.config.database.hostname=localhost --cdc.config.database.port=3306 --cdc.schema=true --cdc.flattering.enabled=true
 ```
+
+== Debezium property mapping
+
+Following table illustrates how the
+.Table Shortcut Properties Mapping
+|===
+| Shortcut | Original | Description
+
+|cdc.connector
+|cdc.config.connector.class
+|`mysql` : MySqlConnector, `postgres` : PostgresConnector, `mongodb` : MongodbSourceConnector, `oracle` : OracleConnector, `sqlserver` : SqlServerConnector
+
+|cdc.name
+|cdc.config.name
+|
+
+|cdc.offset.flush-interval
+|cdc.config.offset.flush.interval.ms
+|
+
+|cdc.offset.commit-timeout
+|cdc.config.offset.flush.timeout.ms
+|
+
+|cdc.offset.policy
+|cdc.config.offset.commit.policy
+|`periodic` : PeriodicCommitOffsetPolicy, `always` : AlwaysCommitOffsetPolicy
+
+|cdc.offset.storage
+|cdc.config.offset.storage
+|`metadata` : MetadataStoreOffsetBackingStore, `file` : FileOffsetBackingStore, `kafka` : KafkaOffsetBackingStore, `memory` : MemoryOffsetBackingStore
+
+|cdc.flattering.drop-tombstones
+|cdc.config.drop.tombstones
+|
+
+|cdc.flattering.delete-handling-mode
+|cdc.config.delete.handling.mode
+|`none` : none, `drop` : drop, `rewrite` : rewrite
+
+|===

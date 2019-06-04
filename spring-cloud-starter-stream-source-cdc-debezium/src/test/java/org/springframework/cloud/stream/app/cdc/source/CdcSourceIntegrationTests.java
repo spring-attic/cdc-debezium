@@ -158,35 +158,34 @@ public abstract class CdcSourceIntegrationTests {
 		}
 	}
 
-	@TestPropertySource(properties = {
-			"cdc.connector=mongodb",
-
-			"cdc.config.tasks.max=1",
-			"cdc.config.mongodb.hosts=rs0/localhost:27017",
-			"cdc.config.mongodb.name=dbserver1",
-			"cdc.config.mongodb.user=debezium",
-			"cdc.config.mongodb.password=dbz",
-			"cdc.config.database.whitelist=inventory",
-	})
-	public static class CdcSqlMongoDbTests extends CdcSourceIntegrationTests {
-
-		@Test
-		@Ignore
-		public void testOne() throws InterruptedException {
-
-			Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-			Assert.assertNotNull(received);
-
-			do {
-				received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-				if (received != null) {
-					System.out.println("Headers: " + received.getHeaders());
-					System.out.println("Payload: " + received.getPayload());
-				}
-			} while (received != null);
-
-		}
-	}
+	//@TestPropertySource(properties = {
+	//		"cdc.connector=mongodb",
+	//
+	//		"cdc.config.tasks.max=1",
+	//		"cdc.config.mongodb.hosts=rs0/localhost:27017",
+	//		"cdc.config.mongodb.name=dbserver1",
+	//		"cdc.config.mongodb.user=debezium",
+	//		"cdc.config.mongodb.password=dbz",
+	//		"cdc.config.database.whitelist=inventory",
+	//})
+	//public static class CdcSqlMongoDbTests extends CdcSourceIntegrationTests {
+	//
+	//	@Test
+	//	public void testOne() throws InterruptedException {
+	//
+	//		Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+	//		Assert.assertNotNull(received);
+	//
+	//		do {
+	//			received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+	//			if (received != null) {
+	//				System.out.println("Headers: " + received.getHeaders());
+	//				System.out.println("Payload: " + received.getPayload());
+	//			}
+	//		} while (received != null);
+	//
+	//	}
+	//}
 
 	@SpringBootConfiguration
 	@EnableAutoConfiguration
