@@ -19,7 +19,6 @@ package org.springframework.cloud.stream.app.cdc.source;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -189,7 +188,7 @@ public abstract class CdcSourceIntegrationTests {
 
 	@SpringBootConfiguration
 	@EnableAutoConfiguration
-	@Import(CdcSourceConfiguration.class)
+	@Import(CdcDebeziumSourceConfiguration.class)
 	public static class TestCdcSourceApplication {
 
 	}

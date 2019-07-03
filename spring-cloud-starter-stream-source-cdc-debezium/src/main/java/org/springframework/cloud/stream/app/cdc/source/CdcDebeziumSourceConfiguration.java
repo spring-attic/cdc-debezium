@@ -43,9 +43,9 @@ import org.springframework.messaging.Message;
 @EnableBinding(Source.class)
 @EnableConfigurationProperties({ CdcSourceProperties.class })
 @Import(CdcStreamConfiguration.class)
-public class CdcSourceConfiguration {
+public class CdcDebeziumSourceConfiguration {
 
-	private static final Log logger = LogFactory.getLog(CdcSourceConfiguration.class);
+	private static final Log logger = LogFactory.getLog(CdcDebeziumSourceConfiguration.class);
 
 	@Autowired
 	private Consumer<FluxSink<Message<byte[]>>> engine;
