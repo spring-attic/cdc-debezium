@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.cloud.stream.app.cdc.source;
+package org.springframework.cloud.stream.app.cdc.debezium.source;
 
 import java.util.concurrent.TimeUnit;
 
