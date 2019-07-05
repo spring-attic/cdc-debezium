@@ -19,7 +19,7 @@
 
 	<properties>
 		<spring-cloud-stream.version>2.1.2.RELEASE</spring-cloud-stream.version>
-		<version.debezium>0.9.2.Final</version.debezium>
+		<version.debezium>0.9.5.Final</version.debezium>
 	</properties>
 
 	<dependencyManagement>
