@@ -20,10 +20,20 @@
 	<properties>
 		<spring-cloud-stream.version>2.1.2.RELEASE</spring-cloud-stream.version>
 		<version.debezium>0.9.5.Final</version.debezium>
+		<!-- Note: postgresql version MUST match the version used by
+		the debezium postgres connector -->
+		<postgresql.version>42.2.5</postgresql.version>
+
 	</properties>
 
 	<dependencyManagement>
 		<dependencies>
+			<dependency>
+				<groupId>org.postgresql</groupId>
+				<artifactId>postgresql</artifactId>
+				<version>${postgresql.version}</version>
+			</dependency>
+
 			<dependency>
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-stream-reactive</artifactId>
