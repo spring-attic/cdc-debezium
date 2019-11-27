@@ -95,17 +95,21 @@
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
 			<version>${version.mysql.driver}</version>
-			<!--<scope>test</scope>-->
 		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.cloud.stream.app</groupId>
 			<artifactId>cdc-debezium-app-starters-test-support</artifactId>
-			<scope>tests</scope>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-stream-test-support</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jdbc</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

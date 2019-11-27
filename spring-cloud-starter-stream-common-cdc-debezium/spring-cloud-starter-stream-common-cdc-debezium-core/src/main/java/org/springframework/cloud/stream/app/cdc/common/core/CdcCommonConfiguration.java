@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.function.Function;
 
-import io.debezium.transforms.UnwrapFromEnvelope;
+import io.debezium.transforms.ExtractNewRecordState;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.kafka.connect.json.JsonConverter;
@@ -51,20 +51,19 @@ public class CdcCommonConfiguration {
 
 	@Bean
 	public Function<SourceRecord, SourceRecord> recordFlattering(CdcCommonProperties properties,
-			UnwrapFromEnvelope unwrapFromEnvelope) {
+			ExtractNewRecordState extractNewRecordState) {
 		return sourceRecord -> properties.getFlattering().isEnabled() ?
-				(SourceRecord) unwrapFromEnvelope.apply(sourceRecord) : sourceRecord;
+				(SourceRecord) extractNewRecordState.apply(sourceRecord) : sourceRecord;
 	}
 
 	@Bean
-	public UnwrapFromEnvelope unwrapFromEnvelope(CdcCommonProperties properties) {
-		UnwrapFromEnvelope unwrapFromEnvelope = new UnwrapFromEnvelope();
-		Map<String, Object> config = unwrapFromEnvelope.config().defaultValues();
+	public ExtractNewRecordState extractNewRecordState(CdcCommonProperties properties) {
+		ExtractNewRecordState extractNewRecordState = new ExtractNewRecordState();
+		Map<String, Object> config = extractNewRecordState.config().defaultValues();
 		config.put("drop.tombstones", properties.getFlattering().isDropTombstones());
 		config.put("delete.handling.mode", properties.getFlattering().getDeleteHandlingMode().name());
-		unwrapFromEnvelope.configure(config);
-
-		return unwrapFromEnvelope;
+		extractNewRecordState.configure(config);
+		return extractNewRecordState;
 	}
 
 	@Bean

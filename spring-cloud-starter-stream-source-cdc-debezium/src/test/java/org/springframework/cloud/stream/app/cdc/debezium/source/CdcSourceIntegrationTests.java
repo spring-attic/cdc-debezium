@@ -29,10 +29,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.stream.messaging.Source;
 import org.springframework.cloud.stream.test.binder.MessageCollector;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.messaging.Message;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.jdbc.JdbcTestUtils;
 
 /**
  * @author Christian Tzolov
@@ -89,6 +92,105 @@ public abstract class CdcSourceIntegrationTests {
 				}
 			} while (received != null);
 
+		}
+	}
+
+	@TestPropertySource(properties = {
+			"cdc.connector=mysql",
+			"cdc.schema=false",
+			"cdc.flattering.enabled=true",
+
+			"cdc.config.database.user=debezium",
+			"cdc.config.database.password=dbz",
+			"cdc.config.database.hostname=localhost",
+			"cdc.config.database.port=3306",
+
+			"cdc.config.database.server.id=85744",
+			"cdc.config.database.server.name=my-app-connector",
+
+			"cdc.stream.header.key=true",
+			"cdc.stream.header.offset=true",
+
+			"cdc.flattering.dropTombstones=false" // DONT DROP Tombstones
+	})
+	public static class CdcHandleDeletionWithTombstonesTests extends CdcSourceIntegrationTests {
+
+		@Test
+		public void testOne() throws InterruptedException {
+			JdbcTemplate jdbcTemplate = CdcSourceIntegrationTests.jdbcTemplate(
+					"com.mysql.jdbc.Driver", "jdbc:mysql://localhost:3306/inventory", "root", "debezium");
+			jdbcTemplate.update("INSERT INTO customers(first_name,last_name,email) VALUES ('Test666','Test666','Test666@walker.com')");
+
+			Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+			Assert.assertNotNull(received);
+
+			do {
+				received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+				if (received != null) {
+					System.out.println("Headers: " + received.getHeaders());
+					System.out.println("Payload: " + received.getPayload());
+				}
+			} while (received != null);
+
+			JdbcTestUtils.deleteFromTableWhere(jdbcTemplate, "customers", "first_name = ?", "Test666");
+
+			received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+			Assert.assertNotNull(received);
+
+			// Because tombstones are not dropped second tombstones message is send;
+			received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+			Assert.assertNotNull(received);
+
+			received = messageCollector.forChannel(this.channels.output()).poll(1, TimeUnit.SECONDS);
+			Assert.assertNull(received);
+		}
+	}
+
+	@TestPropertySource(properties = {
+			"cdc.connector=mysql",
+			"cdc.schema=false",
+			"cdc.flattering.enabled=true",
+
+			"cdc.config.database.user=debezium",
+			"cdc.config.database.password=dbz",
+			"cdc.config.database.hostname=localhost",
+			"cdc.config.database.port=3306",
+
+			"cdc.config.database.server.id=85744",
+			"cdc.config.database.server.name=my-app-connector",
+
+			"cdc.stream.header.key=true",
+			"cdc.stream.header.offset=true",
+
+			"cdc.flattering.dropTombstones=true" // DROP Tombstones - Default behavior
+	})
+	public static class CdcHandleDeletionWithDropTombstonesTests extends CdcSourceIntegrationTests {
+
+		@Test
+		public void testOne() throws InterruptedException {
+
+			JdbcTemplate jdbcTemplate = CdcSourceIntegrationTests.jdbcTemplate(
+					"com.mysql.jdbc.Driver", "jdbc:mysql://localhost:3306/inventory", "root", "debezium");
+			jdbcTemplate.update("INSERT INTO customers(first_name,last_name,email) VALUES ('Test666','Test666','Test666@walker.com')");
+
+			Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+			Assert.assertNotNull(received);
+
+			do {
+				received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+				if (received != null) {
+					System.out.println("Headers: " + received.getHeaders());
+					System.out.println("Payload: " + received.getPayload());
+				}
+			} while (received != null);
+
+			JdbcTestUtils.deleteFromTableWhere(jdbcTemplate, "customers", "first_name = ?", "Test666");
+
+			received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+			Assert.assertNotNull(received);
+
+			received = messageCollector.forChannel(this.channels.output()).poll(1, TimeUnit.SECONDS);
+			Assert.assertNull(received);
 		}
 	}
 
@@ -191,5 +293,16 @@ public abstract class CdcSourceIntegrationTests {
 	@Import(CdcDebeziumSourceConfiguration.class)
 	public static class TestCdcSourceApplication {
 
+	}
+
+	private static JdbcTemplate jdbcTemplate(String jdbcDriver, String jdbcUrl, String user, String password) {
+
+		DriverManagerDataSource dataSource = new DriverManagerDataSource();
+		dataSource.setDriverClassName(jdbcDriver);
+		dataSource.setUrl(jdbcUrl);
+		dataSource.setUsername(user);
+		dataSource.setPassword(password);
+
+		return new JdbcTemplate(dataSource);
 	}
 }

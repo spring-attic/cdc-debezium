@@ -56,7 +56,16 @@ public class CdcStreamConfiguration {
 
 			Consumer<SourceRecord> messageConsumer = sourceRecord -> {
 
+				if (sourceRecord == null) {
+					logger.debug("Null sourceRecord");
+					return;
+				}
+
 				byte[] cdcJsonPayload = valueSerializer.apply(sourceRecord);
+
+				if (cdcJsonPayload == null) {
+					cdcJsonPayload = "null".getBytes();
+				}
 
 				MessageBuilder<byte[]> messageBuilder = MessageBuilder
 						.withPayload(cdcJsonPayload)
