@@ -37,6 +37,9 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.jdbc.JdbcTestUtils;
 
+import static org.hamcrest.Matchers.isEmptyString;
+import static org.hamcrest.core.Is.is;
+
 /**
  * @author Christian Tzolov
  */
@@ -111,15 +114,17 @@ public abstract class CdcSourceIntegrationTests {
 			"cdc.stream.header.key=true",
 			"cdc.stream.header.offset=true",
 
-			"cdc.flattering.dropTombstones=false" // DONT DROP Tombstones
+			"cdc.flattering.dropTombstones=false" // E.g. generate tombstones events or record deletion
 	})
 	public static class CdcHandleDeletionWithTombstonesTests extends CdcSourceIntegrationTests {
 
 		@Test
 		public void testOne() throws InterruptedException {
 			JdbcTemplate jdbcTemplate = CdcSourceIntegrationTests.jdbcTemplate(
-					"com.mysql.jdbc.Driver", "jdbc:mysql://localhost:3306/inventory", "root", "debezium");
-			jdbcTemplate.update("INSERT INTO customers(first_name,last_name,email) VALUES ('Test666','Test666','Test666@walker.com')");
+					"com.mysql.cj.jdbc.Driver", "jdbc:mysql://localhost:3306/inventory", "root", "debezium");
+			jdbcTemplate.update("insert into `customers`(`first_name`,`last_name`,`email`) VALUES('Test666', 'Test666', 'Test666@spring.org')");
+			String newRecordId = jdbcTemplate.query("select * from `customers` where `first_name` = ?",
+					(rs, rowNum) -> rs.getString("id"), "Test666").iterator().next();
 
 			Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
 			Assert.assertNotNull(received);
@@ -140,6 +145,12 @@ public abstract class CdcSourceIntegrationTests {
 			// Because tombstones are not dropped second tombstones message is send;
 			received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
 			Assert.assertNotNull(received);
+			Assert.assertThat("Tombstones event should have empty payload",
+					received.getPayload() + "", isEmptyString());
+
+			String key = (String) received.getHeaders().get("cdc.key");
+			Assert.assertThat("Tombstones event should carry the deleted record id in the cdc.key header",
+					key, is("{\"id\":" + newRecordId + "}"));
 
 			received = messageCollector.forChannel(this.channels.output()).poll(1, TimeUnit.SECONDS);
 			Assert.assertNull(received);
@@ -162,7 +173,7 @@ public abstract class CdcSourceIntegrationTests {
 			"cdc.stream.header.key=true",
 			"cdc.stream.header.offset=true",
 
-			"cdc.flattering.dropTombstones=true" // DROP Tombstones - Default behavior
+			"cdc.flattering.dropTombstones=true" // drop the Tombstones events on record deletion - Default behavior
 	})
 	public static class CdcHandleDeletionWithDropTombstonesTests extends CdcSourceIntegrationTests {
 
@@ -170,8 +181,8 @@ public abstract class CdcSourceIntegrationTests {
 		public void testOne() throws InterruptedException {
 
 			JdbcTemplate jdbcTemplate = CdcSourceIntegrationTests.jdbcTemplate(
-					"com.mysql.jdbc.Driver", "jdbc:mysql://localhost:3306/inventory", "root", "debezium");
-			jdbcTemplate.update("INSERT INTO customers(first_name,last_name,email) VALUES ('Test666','Test666','Test666@walker.com')");
+					"com.mysql.cj.jdbc.Driver", "jdbc:mysql://localhost:3306/inventory", "root", "debezium");
+			jdbcTemplate.update("insert into `customers`(`first_name`,`last_name`,`email`) VALUES('Test666', 'Test666', 'Test666@spring.org')");
 
 			Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
 			Assert.assertNotNull(received);

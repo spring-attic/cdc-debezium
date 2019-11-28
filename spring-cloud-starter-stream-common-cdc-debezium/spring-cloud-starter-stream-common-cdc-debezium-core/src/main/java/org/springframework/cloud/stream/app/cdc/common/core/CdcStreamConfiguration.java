@@ -46,6 +46,8 @@ public class CdcStreamConfiguration {
 
 	private static final Log logger = LogFactory.getLog(CdcStreamConfiguration.class);
 
+	private static final byte[] EMTPY_PAYLOAD = "".getBytes();
+
 	@Bean
 	public Consumer<FluxSink<Message<byte[]>>> engine(EmbeddedEngine.Builder embeddedEngineBuilder,
 			Function<SourceRecord, byte[]> valueSerializer, Function<SourceRecord, byte[]> keySerializer,
@@ -56,15 +58,18 @@ public class CdcStreamConfiguration {
 
 			Consumer<SourceRecord> messageConsumer = sourceRecord -> {
 
+				// When the Tombstone events are disabled, the engine still sends are record but serialized to null
 				if (sourceRecord == null) {
-					logger.debug("Null sourceRecord");
+					logger.debug("ignore  disabled tombstone events");
 					return;
 				}
 
 				byte[] cdcJsonPayload = valueSerializer.apply(sourceRecord);
 
+				// When the tombstone event is enabled, Debezium serializes the payload to null (e.g. empty payload)
+				// while the metadata information is carried through the headers (cdc.key)
 				if (cdcJsonPayload == null) {
-					cdcJsonPayload = "null".getBytes();
+					cdcJsonPayload = EMTPY_PAYLOAD;
 				}
 
 				MessageBuilder<byte[]> messageBuilder = MessageBuilder
