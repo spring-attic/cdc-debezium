@@ -16,6 +16,9 @@
 
 package org.springframework.cloud.stream.app.cdc.debezium.source;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
@@ -39,6 +42,9 @@ import org.springframework.test.jdbc.JdbcTestUtils;
 
 import static org.hamcrest.Matchers.isEmptyString;
 import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 
 /**
  * @author Christian Tzolov
@@ -83,18 +89,8 @@ public abstract class CdcSourceIntegrationTests {
 
 		@Test
 		public void testOne() throws InterruptedException {
-
-			Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-			Assert.assertNotNull(received);
-
-			do {
-				received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-				if (received != null) {
-					System.out.println("Headers: " + received.getHeaders());
-					System.out.println("Payload: " + received.getPayload());
-				}
-			} while (received != null);
-
+			List<Message<?>> list =  CdcSourceIntegrationTests.drain(messageCollector.forChannel(this.channels.output()));
+			assertThat(list.size(), is(52));
 		}
 	}
 
@@ -120,40 +116,33 @@ public abstract class CdcSourceIntegrationTests {
 
 		@Test
 		public void testOne() throws InterruptedException {
+
 			JdbcTemplate jdbcTemplate = CdcSourceIntegrationTests.jdbcTemplate(
 					"com.mysql.cj.jdbc.Driver", "jdbc:mysql://localhost:3306/inventory", "root", "debezium");
 			jdbcTemplate.update("insert into `customers`(`first_name`,`last_name`,`email`) VALUES('Test666', 'Test666', 'Test666@spring.org')");
 			String newRecordId = jdbcTemplate.query("select * from `customers` where `first_name` = ?",
 					(rs, rowNum) -> rs.getString("id"), "Test666").iterator().next();
 
-			Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-			Assert.assertNotNull(received);
-
-			do {
-				received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-				if (received != null) {
-					System.out.println("Headers: " + received.getHeaders());
-					System.out.println("Payload: " + received.getPayload());
-				}
-			} while (received != null);
+			List<Message<?>> messages = CdcSourceIntegrationTests.drain(messageCollector.forChannel(this.channels.output()));
+			assertThat(messages.size(), is(53));
 
 			JdbcTestUtils.deleteFromTableWhere(jdbcTemplate, "customers", "first_name = ?", "Test666");
 
-			received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-			Assert.assertNotNull(received);
+			Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+			assertNotNull(received);
 
 			// Because tombstones are not dropped second tombstones message is send;
 			received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-			Assert.assertNotNull(received);
-			Assert.assertThat("Tombstones event should have empty payload",
+			assertNotNull(received);
+			assertThat("Tombstones event should have empty payload",
 					received.getPayload() + "", isEmptyString());
 
 			String key = (String) received.getHeaders().get("cdc.key");
-			Assert.assertThat("Tombstones event should carry the deleted record id in the cdc.key header",
+			assertThat("Tombstones event should carry the deleted record id in the cdc.key header",
 					key, is("{\"id\":" + newRecordId + "}"));
 
 			received = messageCollector.forChannel(this.channels.output()).poll(1, TimeUnit.SECONDS);
-			Assert.assertNull(received);
+			assertNull(received);
 		}
 	}
 
@@ -184,24 +173,16 @@ public abstract class CdcSourceIntegrationTests {
 					"com.mysql.cj.jdbc.Driver", "jdbc:mysql://localhost:3306/inventory", "root", "debezium");
 			jdbcTemplate.update("insert into `customers`(`first_name`,`last_name`,`email`) VALUES('Test666', 'Test666', 'Test666@spring.org')");
 
-			Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-			Assert.assertNotNull(received);
-
-			do {
-				received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-				if (received != null) {
-					System.out.println("Headers: " + received.getHeaders());
-					System.out.println("Payload: " + received.getPayload());
-				}
-			} while (received != null);
+			List<Message<?>> messages = CdcSourceIntegrationTests.drain(messageCollector.forChannel(this.channels.output()));
+			assertThat(messages.size(), is(53));
 
 			JdbcTestUtils.deleteFromTableWhere(jdbcTemplate, "customers", "first_name = ?", "Test666");
 
-			received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-			Assert.assertNotNull(received);
+			Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+			assertNotNull(received);
 
 			received = messageCollector.forChannel(this.channels.output()).poll(1, TimeUnit.SECONDS);
-			Assert.assertNull(received);
+			assertNull(received);
 		}
 	}
 
@@ -222,18 +203,8 @@ public abstract class CdcSourceIntegrationTests {
 
 		@Test
 		public void testOne() throws InterruptedException {
-
-			Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-			Assert.assertNotNull(received);
-
-			do {
-				received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-				if (received != null) {
-					System.out.println("Headers: " + received.getHeaders());
-					System.out.println("Payload: " + received.getPayload());
-				}
-			} while (received != null);
-
+			List<Message<?>> messages = CdcSourceIntegrationTests.drain(messageCollector.forChannel(this.channels.output()));
+			assertThat(messages.size(), is(5786));
 		}
 	}
 
@@ -255,18 +226,8 @@ public abstract class CdcSourceIntegrationTests {
 
 		@Test
 		public void testOne() throws InterruptedException {
-
-			Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-			Assert.assertNotNull(received);
-
-			do {
-				received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-				if (received != null) {
-					System.out.println("Headers: " + received.getHeaders());
-					System.out.println("Payload: " + received.getPayload());
-				}
-			} while (received != null);
-
+			List<Message<?>> messages = CdcSourceIntegrationTests.drain(messageCollector.forChannel(this.channels.output()));
+			assertThat(messages.size(), is(26));
 		}
 	}
 
@@ -290,14 +251,11 @@ public abstract class CdcSourceIntegrationTests {
 	//
 	//		do {
 	//			received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-	//			if (received != null) {
-	//				System.out.println("Headers: " + received.getHeaders());
-	//				System.out.println("Payload: " + received.getPayload());
-	//			}
 	//		} while (received != null);
 	//
 	//	}
 	//}
+
 
 	@SpringBootConfiguration
 	@EnableAutoConfiguration
@@ -315,5 +273,17 @@ public abstract class CdcSourceIntegrationTests {
 		dataSource.setPassword(password);
 
 		return new JdbcTemplate(dataSource);
+	}
+
+	private static List<Message<?>> drain(BlockingQueue<Message<?>> queue) throws InterruptedException {
+		List<Message<?>> list = new ArrayList<>();
+		Message<?> received;
+		do {
+			received = queue.poll(10, TimeUnit.SECONDS);
+			if (received != null){
+				list.add(received);
+			}
+		} while (received != null);
+		return list;
 	}
 }
