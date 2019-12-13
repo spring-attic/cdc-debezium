@@ -15,6 +15,7 @@
 
 package org.springframework.cloud.stream.app.cdc.common.core;
 
+import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -27,12 +28,17 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.kafka.connect.source.SourceRecord;
 import reactor.core.publisher.FluxSink;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cloud.stream.annotation.StreamMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.kafka.support.KafkaNull;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
+import org.springframework.messaging.converter.AbstractMessageConverter;
+import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.MimeTypeUtils;
 
@@ -46,10 +52,8 @@ public class CdcStreamConfiguration {
 
 	private static final Log logger = LogFactory.getLog(CdcStreamConfiguration.class);
 
-	private static final byte[] EMTPY_PAYLOAD = "".getBytes();
-
 	@Bean
-	public Consumer<FluxSink<Message<byte[]>>> engine(EmbeddedEngine.Builder embeddedEngineBuilder,
+	public Consumer<FluxSink<Message<?>>> engine(EmbeddedEngine.Builder embeddedEngineBuilder,
 			Function<SourceRecord, byte[]> valueSerializer, Function<SourceRecord, byte[]> keySerializer,
 			Function<SourceRecord, SourceRecord> recordFlattering,
 			ObjectMapper mapper, CdcStreamProperties cdcStreamingEngineProperties) {
@@ -58,21 +62,27 @@ public class CdcStreamConfiguration {
 
 			Consumer<SourceRecord> messageConsumer = sourceRecord -> {
 
-				// When the Tombstone events are disabled, the engine still sends are record but serialized to null
+				// When the Tombstone events are disabled, the engine still sends a record but serialized to null
 				if (sourceRecord == null) {
-					logger.debug("ignore  disabled tombstone events");
+					logger.debug("Ignore disabled tombstone events");
 					return;
 				}
 
-				byte[] cdcJsonPayload = valueSerializer.apply(sourceRecord);
+				Object cdcJsonPayload = valueSerializer.apply(sourceRecord);
 
 				// When the tombstone event is enabled, Debezium serializes the payload to null (e.g. empty payload)
 				// while the metadata information is carried through the headers (cdc.key)
-				if (cdcJsonPayload == null) {
-					cdcJsonPayload = EMTPY_PAYLOAD;
+				if ((cdcJsonPayload == null) && KafkaPresent.isKafkaPresent()) {
+					cdcJsonPayload = KafkaPresent.getKafkaNullInstance();
 				}
 
-				MessageBuilder<byte[]> messageBuilder = MessageBuilder
+				// If payload is still null ignore the message.
+				if (cdcJsonPayload == null) {
+					logger.warn("dropped null payload message. Is kafka present:" + KafkaPresent.isKafkaPresent());
+					return;
+				}
+
+				MessageBuilder<?> messageBuilder = MessageBuilder
 						.withPayload(cdcJsonPayload)
 						.setHeader("cdc.topic", sourceRecord.topic())
 						.setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE);
@@ -106,4 +116,34 @@ public class CdcStreamConfiguration {
 			});
 		};
 	}
+	
+	@Bean
+	@StreamMessageConverter
+	@ConditionalOnClass(name = "org.springframework.kafka.support.KafkaNull")
+	public MessageConverter kafkaNullConverter() {
+		class KafkaNullConverter extends AbstractMessageConverter {
+
+			KafkaNullConverter() {
+				super(Collections.emptyList());
+			}
+
+			@Override
+			protected boolean supports(Class<?> clazz) {
+				return KafkaNull.class.equals(clazz);
+			}
+
+			@Override
+			protected Object convertFromInternal(Message<?> message, Class<?> targetClass, Object conversionHint) {
+				return message.getPayload();
+			}
+
+			@Override
+			protected Object convertToInternal(Object payload, MessageHeaders headers, Object conversionHint) {
+				return payload;
+			}
+
+		}
+		return new KafkaNullConverter();
+	}
+
 }

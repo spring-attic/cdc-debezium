@@ -48,14 +48,14 @@ public class CdcDebeziumSourceConfiguration {
 	private static final Log logger = LogFactory.getLog(CdcDebeziumSourceConfiguration.class);
 
 	@Autowired
-	private Consumer<FluxSink<Message<byte[]>>> engine;
+	private Consumer<FluxSink<Message<?>>> engine;
 
 	@Autowired
 	private CdcSourceProperties properties;
 
 	@StreamEmitter
 	@Output(Source.OUTPUT)
-	public Flux<Message<byte[]>> emit() {
+	public Flux<Message<?>> emit() {
 		return Flux.create(engine);
 	}
 }

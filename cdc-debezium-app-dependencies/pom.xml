@@ -23,6 +23,8 @@
 		<!-- Note: postgresql version MUST match the version used by
 		the debezium postgres connector -->
 		<postgresql.version>42.2.5</postgresql.version>
+		<spring-kafka.version>2.2.7.RELEASE</spring-kafka.version>
+		<spring-jdbc.version>5.2.1.RELEASE</spring-jdbc.version>
 
 	</properties>
 
@@ -67,7 +69,13 @@
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-jdbc</artifactId>
-				<version>5.2.1.RELEASE</version>
+				<version>${spring-jdbc.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework.kafka</groupId>
+				<artifactId>spring-kafka</artifactId>
+				<version>${spring-kafka.version}</version>
 			</dependency>
 
 			<!-- Debezioum -->

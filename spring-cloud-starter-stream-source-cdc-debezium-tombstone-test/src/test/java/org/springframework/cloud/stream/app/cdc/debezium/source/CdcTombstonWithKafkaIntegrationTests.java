@@ -45,6 +45,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
 /**
+ * When Spring-Kafka is present on the classpath and dropTombstones=false, Debezium generates extra (tombstone) message
+ * with null payload. Binders don't allow null paylaods. To preserver the tumbsotne semantics with Spring-Kafka we need to
+ * send KafkaNull payload.
+ *
  * @author Christian Tzolov
  */
 @RunWith(SpringRunner.class)
@@ -55,9 +59,18 @@ import static org.junit.Assert.assertThat;
 				"cdc.name=my-sql-connector",
 				"cdc.schema=false",
 				"cdc.config.database.history=io.debezium.relational.history.MemoryDatabaseHistory",
+				"cdc.connector=mysql",
+				"cdc.schema=false",
+				"cdc.flattering.enabled=true",
+				"cdc.config.database.user=debezium",
+				"cdc.config.database.password=dbz",
+				"cdc.config.database.hostname=localhost",
+				"cdc.config.database.port=3306",
+				"cdc.config.database.server.id=85744",
+				"cdc.config.database.server.name=my-app-connector",
 		})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-public abstract class CdcSourceIntegrationTests {
+public abstract class CdcTombstonWithKafkaIntegrationTests {
 
 	@Autowired
 	protected Source channels;
@@ -66,62 +79,22 @@ public abstract class CdcSourceIntegrationTests {
 	protected MessageCollector messageCollector;
 
 	@TestPropertySource(properties = {
-			"cdc.connector=mysql",
-			"cdc.schema=false",
-			"cdc.flattering.enabled=true",
-			//"cdc.offset.storage=memory",
-
-			"cdc.config.database.user=debezium",
-			"cdc.config.database.password=dbz",
-			"cdc.config.database.hostname=localhost",
-			"cdc.config.database.port=3306",
-
-			"cdc.config.database.server.id=85744",
-			"cdc.config.database.server.name=my-app-connector",
-
 			"cdc.stream.header.key=true",
 			"cdc.stream.header.offset=true",
-
-	})
-	public static class CdcMysqlTests extends CdcSourceIntegrationTests {
-
-		@Test
-		public void testOne() throws InterruptedException {
-			List<Message<?>> list = CdcSourceIntegrationTests.drain(messageCollector.forChannel(this.channels.output()));
-			assertThat(list.size(), is(52));
-		}
-	}
-
-	@TestPropertySource(properties = {
-			"cdc.connector=mysql",
-			"cdc.schema=false",
-			"cdc.flattering.enabled=true",
-
-			"cdc.config.database.user=debezium",
-			"cdc.config.database.password=dbz",
-			"cdc.config.database.hostname=localhost",
-			"cdc.config.database.port=3306",
-
-			"cdc.config.database.server.id=85744",
-			"cdc.config.database.server.name=my-app-connector",
-
-			"cdc.stream.header.key=true",
-			"cdc.stream.header.offset=true",
-
 			"cdc.flattering.dropTombstones=false" // E.g. generate tombstones events or record deletion
 	})
-	public static class CdcHandleDeletionWithTombstonesTests extends CdcSourceIntegrationTests {
+	public static class CdcHandleDeletionWithTombstonesTests extends CdcTombstonWithKafkaIntegrationTests {
 
 		@Test
 		public void testOne() throws InterruptedException {
 
-			JdbcTemplate jdbcTemplate = CdcSourceIntegrationTests.jdbcTemplate(
+			JdbcTemplate jdbcTemplate = CdcTombstonWithKafkaIntegrationTests.jdbcTemplate(
 					"com.mysql.cj.jdbc.Driver", "jdbc:mysql://localhost:3306/inventory", "root", "debezium");
 			jdbcTemplate.update("insert into `customers`(`first_name`,`last_name`,`email`) VALUES('Test666', 'Test666', 'Test666@spring.org')");
 			String newRecordId = jdbcTemplate.query("select * from `customers` where `first_name` = ?",
 					(rs, rowNum) -> rs.getString("id"), "Test666").iterator().next();
 
-			List<Message<?>> messages = CdcSourceIntegrationTests.drain(messageCollector.forChannel(this.channels.output()));
+			List<Message<?>> messages = CdcTombstonWithKafkaIntegrationTests.drain(messageCollector.forChannel(this.channels.output()));
 			assertThat(messages.size(), is(53));
 
 			JdbcTestUtils.deleteFromTableWhere(jdbcTemplate, "customers", "first_name = ?", "Test666");
@@ -129,40 +102,36 @@ public abstract class CdcSourceIntegrationTests {
 			Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
 			assertNotNull(received);
 
-			// although the tombstones are not dropped, the tombstones message should be ignored because kafka is not present
+			// Because tombstones are not dropped second tombstones message is send;
+			received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
+			assertNotNull(received);
+			assertThat("Tombstones event should have KafkaNull payload",
+					received.getPayload().getClass().getCanonicalName(), is("org.springframework.kafka.support.KafkaNull"));
+
+			String key = (String) received.getHeaders().get("cdc.key");
+			assertThat("Tombstones event should carry the deleted record id in the cdc.key header",
+					key, is("{\"id\":" + newRecordId + "}"));
+
 			received = messageCollector.forChannel(this.channels.output()).poll(1, TimeUnit.SECONDS);
 			assertNull(received);
 		}
 	}
 
 	@TestPropertySource(properties = {
-			"cdc.connector=mysql",
-			"cdc.schema=false",
-			"cdc.flattering.enabled=true",
-
-			"cdc.config.database.user=debezium",
-			"cdc.config.database.password=dbz",
-			"cdc.config.database.hostname=localhost",
-			"cdc.config.database.port=3306",
-
-			"cdc.config.database.server.id=85744",
-			"cdc.config.database.server.name=my-app-connector",
-
 			"cdc.stream.header.key=true",
 			"cdc.stream.header.offset=true",
-
 			"cdc.flattering.dropTombstones=true" // drop the Tombstones events on record deletion - Default behavior
 	})
-	public static class CdcHandleDeletionWithDropTombstonesTests extends CdcSourceIntegrationTests {
+	public static class CdcHandleDeletionWithDropTombstonesTests extends CdcTombstonWithKafkaIntegrationTests {
 
 		@Test
 		public void testOne() throws InterruptedException {
 
-			JdbcTemplate jdbcTemplate = CdcSourceIntegrationTests.jdbcTemplate(
+			JdbcTemplate jdbcTemplate = CdcTombstonWithKafkaIntegrationTests.jdbcTemplate(
 					"com.mysql.cj.jdbc.Driver", "jdbc:mysql://localhost:3306/inventory", "root", "debezium");
 			jdbcTemplate.update("insert into `customers`(`first_name`,`last_name`,`email`) VALUES('Test666', 'Test666', 'Test666@spring.org')");
 
-			List<Message<?>> messages = CdcSourceIntegrationTests.drain(messageCollector.forChannel(this.channels.output()));
+			List<Message<?>> messages = CdcTombstonWithKafkaIntegrationTests.drain(messageCollector.forChannel(this.channels.output()));
 			assertThat(messages.size(), is(53));
 
 			JdbcTestUtils.deleteFromTableWhere(jdbcTemplate, "customers", "first_name = ?", "Test666");
@@ -174,77 +143,6 @@ public abstract class CdcSourceIntegrationTests {
 			assertNull(received);
 		}
 	}
-
-	@TestPropertySource(properties = {
-			// "cdc.config.connector.class=io.debezium.connector.postgresql.PostgresConnector",
-			"cdc.connector=postgres",
-
-			"cdc.config.database.user=postgres",
-			"cdc.config.database.password=postgres",
-
-			"cdc.config.database.dbname=postgres",
-			"cdc.config.database.hostname=localhost",
-			"cdc.config.database.port=5432",
-
-			"cdc.config.database.server.name=my-app-connector",
-	})
-	public static class CdcPostgresTests extends CdcSourceIntegrationTests {
-
-		@Test
-		public void testOne() throws InterruptedException {
-			List<Message<?>> messages = CdcSourceIntegrationTests.drain(messageCollector.forChannel(this.channels.output()));
-			assertThat(messages.size(), is(5786));
-		}
-	}
-
-	@TestPropertySource(properties = {
-			"cdc.connector=sqlserver",
-			//"cdc.config.database.user=Standard",
-			"cdc.config.database.user=sa",
-			"cdc.config.database.password=Password!",
-			"cdc.config.database.dbname=testDB",
-
-			"cdc.config.database.hostname=localhost",
-			"cdc.config.database.port=1433",
-
-			"cdc.name=my-sql-connector",
-			"cdc.config.database.server.id=85744",
-			"cdc.config.database.server.name=my-app-connector"
-	})
-	public static class CdcSqlServerTests extends CdcSourceIntegrationTests {
-
-		@Test
-		public void testOne() throws InterruptedException {
-			List<Message<?>> messages = CdcSourceIntegrationTests.drain(messageCollector.forChannel(this.channels.output()));
-			assertThat(messages.size(), is(26));
-		}
-	}
-
-	//@TestPropertySource(properties = {
-	//		"cdc.connector=mongodb",
-	//
-	//		"cdc.config.tasks.max=1",
-	//		"cdc.config.mongodb.hosts=rs0/localhost:27017",
-	//		"cdc.config.mongodb.name=dbserver1",
-	//		"cdc.config.mongodb.user=debezium",
-	//		"cdc.config.mongodb.password=dbz",
-	//		"cdc.config.database.whitelist=inventory",
-	//})
-	//public static class CdcSqlMongoDbTests extends CdcSourceIntegrationTests {
-	//
-	//	@Test
-	//	public void testOne() throws InterruptedException {
-	//
-	//		Message<?> received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-	//		Assert.assertNotNull(received);
-	//
-	//		do {
-	//			received = messageCollector.forChannel(this.channels.output()).poll(10, TimeUnit.SECONDS);
-	//		} while (received != null);
-	//
-	//	}
-	//}
-
 
 	@SpringBootConfiguration
 	@EnableAutoConfiguration
