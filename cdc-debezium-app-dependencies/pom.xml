@@ -20,12 +20,12 @@
 	<properties>
 		<spring-cloud-stream.version>2.1.2.RELEASE</spring-cloud-stream.version>
 		<version.debezium>0.10.0.Final</version.debezium>
-		<!-- Note: postgresql version MUST match the version used by
-		the debezium postgres connector -->
+		<!-- Note: postgresql version MUST match the version used by the Debezium postgres connector -->
 		<postgresql.version>42.2.5</postgresql.version>
 		<spring-kafka.version>2.2.7.RELEASE</spring-kafka.version>
 		<spring-jdbc.version>5.2.1.RELEASE</spring-jdbc.version>
-
+		<!-- Debezium requires a particular mysql-connector version -->
+		<mysql-connector-java>5.1.46</mysql-connector-java>
 	</properties>
 
 	<dependencyManagement>
@@ -34,6 +34,12 @@
 				<groupId>org.postgresql</groupId>
 				<artifactId>postgresql</artifactId>
 				<version>${postgresql.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>mysql</groupId>
+				<artifactId>mysql-connector-java</artifactId>
+				<version>${mysql-connector-java}</version>
 			</dependency>
 
 			<dependency>

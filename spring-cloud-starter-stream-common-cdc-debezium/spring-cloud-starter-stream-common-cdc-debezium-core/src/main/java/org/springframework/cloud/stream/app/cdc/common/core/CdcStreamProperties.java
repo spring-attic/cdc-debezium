@@ -42,25 +42,12 @@ public class CdcStreamProperties {
 		 */
 		private boolean offset = false;
 
-		/**
-		 * When true the source record's key data is serialized into the outbound message header under cdc.key.
-		 */
-		private boolean key = false;
-
 		public boolean isOffset() {
 			return offset;
 		}
 
 		public void setOffset(boolean offset) {
 			this.offset = offset;
-		}
-
-		public boolean isKey() {
-			return key;
-		}
-
-		public void setKey(boolean key) {
-			this.key = key;
 		}
 	}
 }

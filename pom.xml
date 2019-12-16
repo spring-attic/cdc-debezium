@@ -19,7 +19,6 @@
 		<module>spring-cloud-starter-stream-common-cdc-debezium</module>
 		<module>cdc-debezium-app-starters-test-support</module>
 		<module>spring-cloud-starter-stream-source-cdc-debezium</module>
-		<module>spring-cloud-starter-stream-source-cdc-debezium-tombstone-test</module>
 	</modules>
 
 	<dependencyManagement>

@@ -32,6 +32,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.util.StringUtils;
 
 /**
  * @author Christian Tzolov
@@ -62,6 +63,10 @@ public class CdcCommonConfiguration {
 		Map<String, Object> config = extractNewRecordState.config().defaultValues();
 		config.put("drop.tombstones", properties.getFlattering().isDropTombstones());
 		config.put("delete.handling.mode", properties.getFlattering().getDeleteHandlingMode().name());
+		config.put("operation.header", properties.getFlattering().isOperationHeader());
+		if (!StringUtils.isEmpty(properties.getFlattering().getAddSourceFields())) {
+			config.put("add.source.fields", properties.getFlattering().getAddSourceFields());
+		}
 		extractNewRecordState.configure(config);
 		return extractNewRecordState;
 	}
