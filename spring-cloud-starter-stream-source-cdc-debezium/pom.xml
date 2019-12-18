@@ -184,7 +184,7 @@
 <!--						</image>-->
 						<!--<image>-->
 							<!--<alias>test-mongodb</alias>-->
-							<!--<name>debezium/example-mongodb:0.10</name>-->
+							<!--<name>debezium/example-mongodb:1.0</name>-->
 							<!--<run>-->
 								<!--<hostname>localhost</hostname>-->
 								<!--<env>-->
@@ -202,7 +202,7 @@
 						<!--</image>-->
 						<image>
 							<alias>mysql</alias>
-							<name>debezium/example-mysql:0.10</name>
+							<name>debezium/example-mysql:1.0</name>
 							<run>
 								<env>
 									<MYSQL_ROOT_PASSWORD>debezium</MYSQL_ROOT_PASSWORD>
@@ -220,7 +220,7 @@
 						</image>
 						<image>
 							<alias>postgres</alias>
-							<name>debezium/example-postgres:0.10</name>
+							<name>debezium/example-postgres:1.0</name>
 							<run>
 								<env>
 									<POSTGRES_USER>postgres</POSTGRES_USER>

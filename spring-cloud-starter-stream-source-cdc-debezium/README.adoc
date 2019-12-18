@@ -45,7 +45,7 @@ Instructions below explains how to run pre-configured test databases form Docker
 Start the `debezium/example-mysql` in a docker:
 [source, bash]
 ----
-docker run -it --rm --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=debezium -e MYSQL_USER=mysqluser -e MYSQL_PASSWORD=mysqlpw debezium/example-mysql:0.10
+docker run -it --rm --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=debezium -e MYSQL_USER=mysqluser -e MYSQL_PASSWORD=mysqlpw debezium/example-mysql:1.0
 ----
 
 [TIP]
@@ -86,10 +86,10 @@ You can run also the `CdcSourceIntegrationTests#CdcMysqlTests` using this mysql 
 
 ==== PostgreSQL
 
-Start a pre-configured postgres server from the `debezium/example-postgres:0.10` Docker image:
+Start a pre-configured postgres server from the `debezium/example-postgres:1.0` Docker image:
 [source, bash]
 ----
-docker run -it --rm --name postgres -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres debezium/example-postgres:0.10
+docker run -it --rm --name postgres -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres debezium/example-postgres:1.0
 ----
 
 You can connect to this server like this:
@@ -181,7 +181,7 @@ You can run also the `CdcSourceIntegrationTests#CdcPostgresTests` using this mys
 
 ==== SQL Server
 
-Start a `sqlserver` from the `debezium/example-postgres:0.10` Docker image:
+Start a `sqlserver` from the `debezium/example-postgres:1.0` Docker image:
 [source, bash]
 ----
 docker run -it --rm --name sqlserver -p 1433:1433 -e ACCEPT_EULA=Y -e MSSQL_PID=Standard -e SA_PASSWORD=Password! -e MSSQL_AGENT_ENABLED=true microsoft/mssql-server-linux:2017-CU9-GDR2
