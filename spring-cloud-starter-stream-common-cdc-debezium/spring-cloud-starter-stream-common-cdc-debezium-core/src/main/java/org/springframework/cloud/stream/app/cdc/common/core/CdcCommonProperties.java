@@ -174,10 +174,18 @@ public class CdcCommonProperties {
 		}
 	}
 
-	public enum DeleteHandlingMode {none, drop, rewrite}
+	public enum DeleteHandlingMode {
+		/** records are removed */
+		drop,
+		/** add a __deleted column with true/false values based on record operation */
+		rewrite,
+		/** pass delete events */
+		none
+	}
 
 	/**
-	 * https://debezium.io/docs/configuration/event-flattening
+	 * https://debezium.io/documentation/reference/0.10/configuration/event-flattening.html
+	 * https://debezium.io/documentation/reference/0.10/configuration/event-flattening.html#configuration_options
 	 */
 	public static class Flattering {
 
@@ -185,6 +193,12 @@ public class CdcCommonProperties {
 		 * Enable flattering the source record events (https://debezium.io/docs/configuration/event-flattening).
 		 */
 		private boolean enabled = true;
+
+		/**
+		 * The adds the event operation (as obtained from the op field of the original record) as a message header
+		 * called cdc_operation
+		 */
+		private boolean operationHeader = false;
 
 		/**
 		 * Debezium by default generates a tombstone record to enable Kafka compaction after a delete record was generated.
@@ -196,7 +210,12 @@ public class CdcCommonProperties {
 		 * How to handle delete records. Options are: (1) none - records are passed, (2) drop - records are removed and
 		 * (3) rewrite - adds '__deleted' field to the records.
 		 */
-		private DeleteHandlingMode deleteHandlingMode = DeleteHandlingMode.none;
+		private DeleteHandlingMode deleteHandlingMode = DeleteHandlingMode.drop;
+
+		/**
+		 * Fields from the change event’s source structure to add as metadata (prefixed with "__") to the flattened record
+		 */
+		private String addSourceFields = null;
 
 		public boolean isEnabled() {
 			return enabled;
@@ -204,6 +223,14 @@ public class CdcCommonProperties {
 
 		public void setEnabled(boolean enabled) {
 			this.enabled = enabled;
+		}
+
+		public boolean isOperationHeader() {
+			return operationHeader;
+		}
+
+		public void setOperationHeader(boolean operationHeader) {
+			this.operationHeader = operationHeader;
 		}
 
 		public boolean isDropTombstones() {
@@ -220,6 +247,14 @@ public class CdcCommonProperties {
 
 		public void setDeleteHandlingMode(DeleteHandlingMode deleteHandlingMode) {
 			this.deleteHandlingMode = deleteHandlingMode;
+		}
+
+		public String getAddSourceFields() {
+			return addSourceFields;
+		}
+
+		public void setAddSourceFields(String addSourceFields) {
+			this.addSourceFields = addSourceFields;
 		}
 	}
 

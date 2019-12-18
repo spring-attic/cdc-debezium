@@ -154,7 +154,7 @@ public final class EmbeddedEngine implements Runnable {
 	public static final Field OFFSET_COMMIT_POLICY = Field.create("offset.commit.policy")
 			.withDescription("The fully-qualified class name of the commit policy type. This class must implement the interface "
 					+ OffsetCommitPolicy.class.getName()
-					+ ". The default is a periodic commity policy based upon time intervals.")
+					+ ". The default is a periodic commit policy based upon time intervals.")
 			.withDefault(OffsetCommitPolicy.PeriodicCommitOffsetPolicy.class.getName())
 			.withValidation(Field::isClassName);
 
@@ -584,8 +584,12 @@ public final class EmbeddedEngine implements Runnable {
 
 			@Override
 			public EmbeddedEngine build() {
-				if (classLoader == null) classLoader = getClass().getClassLoader();
-				if (clock == null) clock = Clock.system();
+				if (classLoader == null) {
+					classLoader = getClass().getClassLoader();
+				}
+				if (clock == null) {
+					clock = Clock.system();
+				}
 				Objects.requireNonNull(config, "A connector configuration must be specified.");
 				Objects.requireNonNull(handler, "A connector consumer or changeHandler must be specified.");
 				return new EmbeddedEngine(config, classLoader, clock,
@@ -614,6 +618,8 @@ public final class EmbeddedEngine implements Runnable {
 	private SourceConnector connector;
 	private OffsetBackingStore offsetStore;
 
+	private SourceTask task;
+
 	private EmbeddedEngine(Configuration config, ClassLoader classLoader, Clock clock, ChangeConsumer handler,
 			CompletionCallback completionCallback, ConnectorCallback connectorCallback,
 			OffsetCommitPolicy offsetCommitPolicy, SourceConnector sourceConnector, OffsetBackingStore offsetStore) {
@@ -624,7 +630,9 @@ public final class EmbeddedEngine implements Runnable {
 		this.classLoader = classLoader;
 		this.clock = clock;
 		this.completionCallback = completionCallback != null ? completionCallback : (success, msg, error) -> {
-			if (!success) logger.error(msg, error);
+			if (!success) {
+				logger.error(msg, error);
+			}
 		};
 		this.connectorCallback = connectorCallback;
 		this.completionResult = new CompletionResult();
@@ -717,7 +725,7 @@ public final class EmbeddedEngine implements Runnable {
 				try {
 					@SuppressWarnings("unchecked")
 					Class<? extends SourceConnector> connectorClass = (Class<SourceConnector>) classLoader.loadClass(connectorClassName);
-					connector = connectorClass.newInstance();
+					connector = connectorClass.getDeclaredConstructor().newInstance();
 				}
 				catch (Throwable t) {
 					fail("Unable to instantiate connector class '" + connectorClassName + "'", t);
@@ -779,9 +787,9 @@ public final class EmbeddedEngine implements Runnable {
 					connectorCallback.ifPresent(ConnectorCallback::connectorStarted);
 					List<Map<String, String>> taskConfigs = connector.taskConfigs(1);
 					Class<? extends Task> taskClass = connector.taskClass();
-					SourceTask task = null;
+					task = null;
 					try {
-						task = (SourceTask) taskClass.newInstance();
+						task = (SourceTask) taskClass.getDeclaredConstructor().newInstance();
 					}
 					catch (IllegalAccessException | InstantiationException t) {
 						fail("Unable to instantiate connector's task class '" + taskClass.getName() + "'", t);
@@ -821,14 +829,19 @@ public final class EmbeddedEngine implements Runnable {
 						RecordCommitter committer = buildRecordCommitter(offsetWriter, task, commitTimeout);
 						while (runningThread.get() != null) {
 							try {
-								logger.debug("Embedded engine is polling task for records on thread " + runningThread.get());
+								logger.debug("Embedded engine is polling task for records on thread {}", runningThread.get());
 								changeRecords = task.poll(); // blocks until there are values ...
 								logger.debug("Embedded engine returned from polling task for records");
 							}
 							catch (InterruptedException e) {
 								// Interrupted while polling ...
-								logger.debug("Embedded engine interrupted on thread " + runningThread.get() + " while polling the task for records");
-								Thread.interrupted();
+								logger.debug("Embedded engine interrupted on thread {} while polling the task for records", runningThread.get());
+								if (this.runningThread.get() == Thread.currentThread()) {
+									// this thread is still set as the running thread -> we were not interrupted
+									// due the stop() call -> probably someone else called the interrupt on us ->
+									// -> we should raise the interrupt flag
+									Thread.currentThread().interrupt();
+								}
 								break;
 							}
 							try {
@@ -959,9 +972,13 @@ public final class EmbeddedEngine implements Runnable {
 	protected void commitOffsets(OffsetStorageWriter offsetWriter, Duration commitTimeout, SourceTask task) {
 		long started = clock.currentTimeInMillis();
 		long timeout = started + commitTimeout.toMillis();
-		if (!offsetWriter.beginFlush()) return;
+		if (!offsetWriter.beginFlush()) {
+			return;
+		}
 		Future<Void> flush = offsetWriter.doFlush(this::completedFlush);
-		if (flush == null) return; // no offsets to commit ...
+		if (flush == null) {
+			return; // no offsets to commit ...
+		}
 
 		// Wait until the offsets are flushed ...
 		try {
@@ -1008,11 +1025,14 @@ public final class EmbeddedEngine implements Runnable {
 		Thread thread = this.runningThread.getAndSet(null);
 		if (thread != null) {
 			try {
-				latch.await(Integer.parseInt(System.getProperty(WAIT_FOR_COMPLETION_BEFORE_INTERRUPT_PROP, Long.toString(WAIT_FOR_COMPLETION_BEFORE_INTERRUPT_DEFAULT.toMillis()))), TimeUnit.MILLISECONDS);
+				latch.await(
+						Long.valueOf(
+								System.getProperty(WAIT_FOR_COMPLETION_BEFORE_INTERRUPT_PROP, Long.toString(WAIT_FOR_COMPLETION_BEFORE_INTERRUPT_DEFAULT.toMillis()))),
+						TimeUnit.MILLISECONDS);
 			}
 			catch (InterruptedException e) {
 			}
-			logger.debug("Interruping the embedded engine's thread " + thread + " (already interrupted: " + thread.isInterrupted() + ")");
+			logger.debug("Interrupting the embedded engine's thread {} (already interrupted: {})", thread, thread.isInterrupted());
 			// Interrupt the thread in case it is blocked while polling the task for records ...
 			thread.interrupt();
 			return true;
@@ -1038,6 +1058,10 @@ public final class EmbeddedEngine implements Runnable {
 	@Override
 	public String toString() {
 		return "EmbeddedEngine{id=" + config.getString(ENGINE_NAME) + '}';
+	}
+
+	public void runWithTask(Consumer<SourceTask> consumer) {
+		consumer.accept(task);
 	}
 
 	protected static class EmbeddedConfig extends WorkerConfig {

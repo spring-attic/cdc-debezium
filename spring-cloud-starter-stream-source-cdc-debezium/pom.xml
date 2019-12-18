@@ -25,6 +25,11 @@
 			<artifactId>postgresql</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>${version.mysql.driver}</version>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-config</artifactId>
 		</dependency>
@@ -92,22 +97,37 @@
 		</dependency>
 
 		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<version>${version.mysql.driver}</version>
-			<!--<scope>test</scope>-->
-		</dependency>
-
-		<dependency>
 			<groupId>org.springframework.cloud.stream.app</groupId>
 			<artifactId>cdc-debezium-app-starters-test-support</artifactId>
-			<scope>tests</scope>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-stream-test-support</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jdbc</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.kafka</groupId>
+			<artifactId>spring-kafka</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-stream-binder-kafka</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.javacrumbs.json-unit</groupId>
+			<artifactId>json-unit</artifactId>
+			<version>1.25.0</version>
+			<scope>test</scope>
+		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -164,7 +184,7 @@
 <!--						</image>-->
 						<!--<image>-->
 							<!--<alias>test-mongodb</alias>-->
-							<!--<name>debezium/example-mongodb:0.10</name>-->
+							<!--<name>debezium/example-mongodb:1.0</name>-->
 							<!--<run>-->
 								<!--<hostname>localhost</hostname>-->
 								<!--<env>-->
@@ -182,7 +202,7 @@
 						<!--</image>-->
 						<image>
 							<alias>mysql</alias>
-							<name>debezium/example-mysql:0.10</name>
+							<name>debezium/example-mysql:1.0</name>
 							<run>
 								<env>
 									<MYSQL_ROOT_PASSWORD>debezium</MYSQL_ROOT_PASSWORD>
@@ -200,7 +220,7 @@
 						</image>
 						<image>
 							<alias>postgres</alias>
-							<name>debezium/example-postgres:0.10</name>
+							<name>debezium/example-postgres:1.0</name>
 							<run>
 								<env>
 									<POSTGRES_USER>postgres</POSTGRES_USER>

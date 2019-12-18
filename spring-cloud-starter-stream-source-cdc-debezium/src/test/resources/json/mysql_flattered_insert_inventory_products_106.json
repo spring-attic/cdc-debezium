@@ -1,0 +1,8 @@
+{
+  "id": 106,
+  "name": "hammer",
+  "description": "16oz carpenter's hammer",
+  "weight": 1.0,
+  "__name": "my-app-connector",
+  "__db": "inventory"
+}
