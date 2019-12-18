@@ -71,7 +71,6 @@
 			<artifactId>app-starters-metadata-store-common</artifactId>
 			<groupId>org.springframework.cloud.stream.app</groupId>
 		</dependency>
-
 	</dependencies>
 
 </project>

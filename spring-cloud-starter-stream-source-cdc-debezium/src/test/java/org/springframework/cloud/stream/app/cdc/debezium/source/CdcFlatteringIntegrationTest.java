@@ -25,19 +25,19 @@ import org.springframework.boot.test.context.assertj.AssertableApplicationContex
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.boot.test.context.runner.ContextConsumer;
 import org.springframework.cloud.stream.app.cdc.common.core.CdcCommonProperties;
-import org.springframework.cloud.stream.app.cdc.common.core.CdcTombstoneConfiguration;
 import org.springframework.cloud.stream.messaging.Source;
 import org.springframework.cloud.stream.test.binder.MessageCollector;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.kafka.support.KafkaNull;
 import org.springframework.messaging.Message;
 import org.springframework.test.jdbc.JdbcTestUtils;
+import org.springframework.util.ClassUtils;
 
 import static net.javacrumbs.jsonunit.JsonAssert.assertJsonEquals;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import static org.springframework.cloud.stream.app.cdc.common.core.CdcTombstoneConfiguration.ORG_SPRINGFRAMEWORK_KAFKA_SUPPORT_KAFKA_NULL;
+import static org.springframework.cloud.stream.app.cdc.common.core.CdcStreamConfiguration.ORG_SPRINGFRAMEWORK_KAFKA_SUPPORT_KAFKA_NULL;
 import static org.springframework.cloud.stream.app.cdc.debezium.source.CdcTestUtils.drain;
 import static org.springframework.cloud.stream.app.cdc.debezium.source.CdcTestUtils.jdbcTemplate;
 import static org.springframework.cloud.stream.app.cdc.debezium.source.CdcTestUtils.resourceToString;
@@ -85,8 +85,7 @@ public class CdcFlatteringIntegrationTest {
 	final ContextConsumer<? super AssertableApplicationContext> noFlatteringTest = context -> {
 		Source channels = context.getBean(Source.class);
 		MessageCollector messageCollector = context.getBean(MessageCollector.class);
-		CdcTombstoneConfiguration.TombstoneSupport tombstoneSupport =
-				context.getBean(CdcTombstoneConfiguration.TombstoneSupport.class);
+		boolean isKafkaPresent = ClassUtils.isPresent(ORG_SPRINGFRAMEWORK_KAFKA_SUPPORT_KAFKA_NULL, context.getClassLoader());
 
 		List<Message<?>> messages = drain(messageCollector.forChannel(channels.output()));
 		assertThat(messages.size(), is(52));
@@ -113,7 +112,7 @@ public class CdcFlatteringIntegrationTest {
 
 		messages = drain(messageCollector.forChannel(channels.output()));
 
-		assertThat(messages.size(), is(tombstoneSupport.isKafkaPresent() ? 4 : 3));
+		assertThat(messages.size(), is(isKafkaPresent ? 4 : 3));
 
 		assertJsonEquals(resourceToString("classpath:/json/mysql_update_inventory_customers.json"),
 				messages.get(1).getPayload().toString());
@@ -125,7 +124,7 @@ public class CdcFlatteringIntegrationTest {
 		assertEquals("my-app-connector.inventory.customers", messages.get(1).getHeaders().get("cdc_topic"));
 		assertJsonEquals("{\"id\":" + newRecordId + "}", messages.get(1).getHeaders().get("cdc_key"));
 
-		if (tombstoneSupport.isKafkaPresent()) {
+		if (isKafkaPresent) {
 			assertThat("Tombstones event should have KafkaNull payload",
 					messages.get(3).getPayload().getClass().getCanonicalName(),
 					is(ORG_SPRINGFRAMEWORK_KAFKA_SUPPORT_KAFKA_NULL));
@@ -171,8 +170,7 @@ public class CdcFlatteringIntegrationTest {
 	final ContextConsumer<? super AssertableApplicationContext> flatteringTest = context -> {
 		Source channels = context.getBean(Source.class);
 		MessageCollector messageCollector = context.getBean(MessageCollector.class);
-		CdcTombstoneConfiguration.TombstoneSupport tombstoneSupport =
-				context.getBean(CdcTombstoneConfiguration.TombstoneSupport.class);
+		boolean isKafkaPresent = ClassUtils.isPresent(ORG_SPRINGFRAMEWORK_KAFKA_SUPPORT_KAFKA_NULL, context.getClassLoader());
 		CdcCommonProperties.Flattering flatteringProps = context.getBean(CdcCommonProperties.class).getFlattering();
 		List<Message<?>> messages = drain(messageCollector.forChannel(channels.output()));
 		assertThat(messages.size(), is(52));
@@ -210,7 +208,7 @@ public class CdcFlatteringIntegrationTest {
 		messages = drain(messageCollector.forChannel(channels.output()));
 
 		assertThat(messages.size(),
-				is((!flatteringProps.isDropTombstones() && tombstoneSupport.isKafkaPresent()) ? 4 : 3));
+				is((!flatteringProps.isDropTombstones() && isKafkaPresent) ? 4 : 3));
 
 		assertJsonEquals(resourceToString("classpath:/json/mysql_flattered_update_inventory_customers.json"),
 				messages.get(1).getPayload().toString());
@@ -230,7 +228,7 @@ public class CdcFlatteringIntegrationTest {
 			}
 		}
 
-		if (!flatteringProps.isDropTombstones() && tombstoneSupport.isKafkaPresent()) {
+		if (!flatteringProps.isDropTombstones() && isKafkaPresent) {
 			assertThat("Tombstones event should have KafkaNull payload",
 					messages.get(3).getPayload().getClass().getCanonicalName(),
 					is(ORG_SPRINGFRAMEWORK_KAFKA_SUPPORT_KAFKA_NULL));

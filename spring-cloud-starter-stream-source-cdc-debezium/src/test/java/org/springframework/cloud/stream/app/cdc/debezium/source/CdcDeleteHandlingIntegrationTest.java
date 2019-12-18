@@ -26,20 +26,20 @@ import org.springframework.boot.test.context.assertj.AssertableApplicationContex
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.boot.test.context.runner.ContextConsumer;
 import org.springframework.cloud.stream.app.cdc.common.core.CdcCommonProperties;
-import org.springframework.cloud.stream.app.cdc.common.core.CdcTombstoneConfiguration;
 import org.springframework.cloud.stream.messaging.Source;
 import org.springframework.cloud.stream.test.binder.MessageCollector;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.kafka.support.KafkaNull;
 import org.springframework.messaging.Message;
 import org.springframework.test.jdbc.JdbcTestUtils;
+import org.springframework.util.ClassUtils;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
-import static org.springframework.cloud.stream.app.cdc.common.core.CdcTombstoneConfiguration.ORG_SPRINGFRAMEWORK_KAFKA_SUPPORT_KAFKA_NULL;
+import static org.springframework.cloud.stream.app.cdc.common.core.CdcStreamConfiguration.ORG_SPRINGFRAMEWORK_KAFKA_SUPPORT_KAFKA_NULL;
 import static org.springframework.cloud.stream.app.cdc.debezium.source.CdcTestUtils.drain;
 import static org.springframework.cloud.stream.app.cdc.debezium.source.CdcTestUtils.jdbcTemplate;
 
@@ -112,7 +112,7 @@ public class CdcDeleteHandlingIntegrationTest {
 		Source channels = context.getBean(Source.class);
 		MessageCollector messageCollector = context.getBean(MessageCollector.class);
 		CdcCommonProperties props = context.getBean(CdcCommonProperties.class);
-		CdcTombstoneConfiguration.TombstoneSupport tombstoneSupport = context.getBean(CdcTombstoneConfiguration.TombstoneSupport.class);
+		boolean isKafkaPresent = ClassUtils.isPresent(ORG_SPRINGFRAMEWORK_KAFKA_SUPPORT_KAFKA_NULL, context.getClassLoader());;
 		CdcCommonProperties.DeleteHandlingMode deleteHandlingMode = props.getFlattering().getDeleteHandlingMode();
 		boolean isDropTombstones = props.getFlattering().isDropTombstones();
 
@@ -144,7 +144,7 @@ public class CdcDeleteHandlingIntegrationTest {
 		}
 		}
 
-		if (isDropTombstones == false && tombstoneSupport.isKafkaPresent()) {
+		if (isDropTombstones == false && isKafkaPresent) {
 			received = messageCollector.forChannel(channels.output()).poll(10, TimeUnit.SECONDS);
 			assertNotNull(received);
 			assertThat("Tombstones event should have KafkaNull payload",
