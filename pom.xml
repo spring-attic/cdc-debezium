@@ -4,7 +4,7 @@
 
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>cdc-debezium-app-starters-build</artifactId>
-	<version>1.0.0.BUILD-SNAPSHOT</version>
+	<version>1.0.0.RC1</version>
 	<packaging>pom</packaging>
 
 	<parent>
@@ -26,7 +26,7 @@
 			<dependency>
 				<groupId>org.springframework.cloud.stream.app</groupId>
 				<artifactId>cdc-debezium-app-dependencies</artifactId>
-				<version>1.0.0.BUILD-SNAPSHOT</version>
+				<version>1.0.0.RC1</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
