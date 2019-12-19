@@ -22,7 +22,7 @@ https://start.spring.io/[Start new Spring Boot project] and add the following st
 
 NOTE: for MySQL you need to adjust the mysql client version to `mysql:mysql-connector-java:8.0.13`.
 
-The CDC starter setups an embedded https://debezium.io[Debezium Connector] to capture the database changes.
+The CDC starter setups an embedded https://debezium.io/documentation/reference/0.10/connectors/index.html[debezium connector] to capture the database changes.
 
 Then implement a `Consumer<SourceRecord>` bean handler to receive and process the CDC notifications:
 
@@ -56,9 +56,26 @@ my-app-connector.inventory.products : {"id":109,"name":"spare tire","description
 my-app-connector.inventory.products_on_hand : {"product_id":101,"quantity":3}
 ----
 
-All Debezium connector properties supported. Just prefix those properties with `cdc.config` prefix.
+All Debezium connector properties are supported. Just prefix those properties with `cdc.config` prefix.
 
-Following snipped shows how to configure the https://debezium.io/docs/connectors/mysql/[MySqlConnector] for MySQL database running on localhost:3306
+Following snipped shows how to configure the https://debezium.io/docs/connectors/mysql/[MySqlConnector] to connect to a local MySQL database run via the `debezium/example-mysql` docker image:
+[source, bash]
+----
+docker run -it --rm --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=debezium -e MYSQL_USER=mysqluser -e MYSQL_PASSWORD=mysqlpw debezium/example-mysql:1.0
+----
+
+[TIP]
+====
+(optional) Use `mysql` client to connected to the database and to create a `debezium` user with required credentials:
+[source, bash]
+----
+docker run -it --rm --name mysqlterm --link mysql --rm mysql:5.7 sh -c 'exec mysql -h"$MYSQL_PORT_3306_TCP_ADDR" -P"$MYSQL_PORT_3306_TCP_PORT" -uroot -p"$MYSQL_ENV_MYSQL_ROOT_PASSWORD"'
+mysql> GRANT SELECT, RELOAD, SHOW DATABASES, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'debezium' IDENTIFIED BY 'dbz';
+----
+====
+
+Configure `cdc-debezium-spring-boot-starter` for consuming cdc events from the MySQL:
+
 [source]
 ----
 cdc.name=my-sql-connector # <1>
@@ -90,9 +107,11 @@ The full list of properties:
 //tag::configuration-properties[]
 $$cdc.config$$:: $$Spring pass-trough wrapper for the debezium configuration properties. All properties with 'cdc.config' prefix are converted into Debezium io.debezium.config.Configuration and the prefix is dropped.$$ *($$Map<String, String>$$, default: `$$<none>$$`)*
 $$cdc.connector$$:: $$Shortcut for the cdc.config.connector.class property. Either of those can be used as long as they do not contradict with each other.$$ *($$ConnectorType$$, default: `$$<none>$$`, possible values: `mysql`,`postgres`,`mongodb`,`oracle`,`sqlserver`)*
-$$cdc.flattering.delete-handling-mode$$:: $$How to handle delete records. Options are: (1) none - records are passed, (2) drop - records are removed and (3) rewrite - adds '__deleted' field to the records.$$ *($$DeleteHandlingMode$$, default: `$$<none>$$`, possible values: `none`,`drop`,`rewrite`)*
+$$cdc.flattering.add-source-fields$$:: $$Fields from the change event’s source structure to add as metadata (prefixed with "__") to the flattened record$$ *($$String$$, default: `$$<none>$$`)*
+$$cdc.flattering.delete-handling-mode$$:: $$How to handle delete records. Options are: (1) none - records are passed, (2) drop - records are removed and (3) rewrite - adds '__deleted' field to the records.$$ *($$DeleteHandlingMode$$, default: `$$<none>$$`, possible values: `drop`,`rewrite`,`none`)*
 $$cdc.flattering.drop-tombstones$$:: $$Debezium by default generates a tombstone record to enable Kafka compaction after a delete record was generated. This record is usually filtered out to avoid duplicates as a delete record is converted to a tombstone record, too.$$ *($$Boolean$$, default: `$$true$$`)*
 $$cdc.flattering.enabled$$:: $$Enable flattering the source record events (https://debezium.io/docs/configuration/event-flattening).$$ *($$Boolean$$, default: `$$true$$`)*
+$$cdc.flattering.operation-header$$:: $$The adds the event operation (as obtained from the op field of the original record) as a message header called cdc_operation$$ *($$Boolean$$, default: `$$false$$`)*
 $$cdc.name$$:: $$Unique name for this sourceConnector instance.$$ *($$String$$, default: `$$<none>$$`)*
 $$cdc.offset.commit-timeout$$:: $$Maximum number of milliseconds to wait for records to flush and partition offset data to be committed to offset storage before cancelling the process and restoring the offset data to be committed in a future attempt.$$ *($$Duration$$, default: `$$5000ms$$`)*
 $$cdc.offset.flush-interval$$:: $$Interval at which to try committing offsets. The default is 1 minute.$$ *($$Duration$$, default: `$$60000ms$$`)*
