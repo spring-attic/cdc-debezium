@@ -46,7 +46,7 @@ public class CdcAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	public Consumer<SourceRecord> defaultSourceRecordConsumer() {
-		return sourceRecord -> logger.info("[CDC Event]: " + sourceRecord.toString());
+		return sourceRecord -> logger.info("[CDC Event]: " + ((sourceRecord == null)? "null":sourceRecord.toString()));
 	}
 
 	@Bean

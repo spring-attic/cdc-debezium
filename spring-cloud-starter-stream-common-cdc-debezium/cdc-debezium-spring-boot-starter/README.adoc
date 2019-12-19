@@ -30,19 +30,23 @@ Then implement a `Consumer<SourceRecord>` bean handler to receive and process th
 ----
 @Bean
 public Consumer<SourceRecord> mySourceRecordConsumer( # <1>
-        Function<SourceRecord, byte[]> valueSerializer) { # <2>
+        Function<SourceRecord, byte[]> keySerializer, # <2>
+        Function<SourceRecord, byte[]> valueSerializer) { # <3>
 
     return sourceRecord -> {
-        System.out.println(sourceRecord.topic() # <3>
-            + " : " + new String(valueSerializer.apply(sourceRecord))); # <4>
+        System.out.println(sourceRecord.topic() # <4>
+            + " : " + new String(keySerializer.apply(sourceRecord)) # <5>
+            + " : " + new String(valueSerializer.apply(sourceRecord))); # <6>
     };
 }
 ----
 
 <1> CDC event listener that is called on every data change.
-<2> Optional valueSerializer converter (by default JsonConverter) that allows to serialize the SourceRecord into a compact binary format.
-<3> The `topic()` provides a logical identifier of the data being changed (e.g. cdc-name.DB-name.table-name)
-<4> Convert to JSON message using the valueSerializer <2>.
+<2> Optional keySerializer converter that allows to serialize the keys of the SourceRecord into a compact binary format.
+<3> Optional valueSerializer converter (by default JsonConverter) that allows to serialize the SourceRecord into a compact binary format.
+<4> The `topic()` provides a logical identifier of the data being changed (e.g. cdc-name.DB-name.table-name)
+<5> Convert kay to text message using the keySerializer
+<6> Convert payload to JSON message using the valueSerializer.
 
 NOTE: you may have to add `@AutoConfigureBefore(CdcAutoConfiguration.class)` to your Boot class to ensure that your record consumer overrides the default handlers.
 
