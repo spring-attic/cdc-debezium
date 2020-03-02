@@ -152,6 +152,15 @@
 						<cdc-debezium-source>
 						</cdc-debezium-source>
 					</generatedApps>
+					<enableContainerImageMetadata>true</enableContainerImageMetadata>
+					<metadataSourceTypeFilters>
+						<filter>org.springframework.cloud.stream.app.cdc.debezium.source.CdcSourceProperties</filter>
+						<filter>org.springframework.cloud.stream.app.cdc.common.core.CdcCommonProperties</filter>
+						<filter>org.springframework.cloud.stream.app.cdc.common.core.CdcStreamProperties</filter>
+						<filter>org.springframework.cloud.stream.app.cdc.common.core.CdcStreamProperties$Header</filter>
+						<filter>org.springframework.cloud.stream.app.cdc.common.core.CdcCommonProperties$Flattering</filter>
+						<filter>org.springframework.cloud.stream.app.cdc.common.core.CdcCommonProperties$Offset</filter>
+					</metadataSourceTypeFilters>
 				</configuration>
 			</plugin>
 			<plugin>
