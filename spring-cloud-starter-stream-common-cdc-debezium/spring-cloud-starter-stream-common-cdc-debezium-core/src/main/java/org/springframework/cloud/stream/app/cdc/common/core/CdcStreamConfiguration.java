@@ -104,9 +104,15 @@ public class CdcStreamConfiguration implements BeanClassLoaderAware {
 					return;
 				}
 
+				byte[] key = keySerializer.apply(sourceRecord);
+				if (key == null) {
+					logger.warn("Null serialised key for sourceRecord: " + sourceRecord);
+					key = new byte[0];
+				}
+
 				MessageBuilder<?> messageBuilder = MessageBuilder
 						.withPayload(cdcJsonPayload)
-						.setHeader("cdc_key", new String(keySerializer.apply(sourceRecord)))
+						.setHeader("cdc_key", new String(key))
 						.setHeader("cdc_topic", sourceRecord.topic())
 						.setHeader(MessageHeaders.CONTENT_TYPE, MimeTypeUtils.APPLICATION_JSON_VALUE);
 
