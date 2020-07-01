@@ -16,7 +16,7 @@
 	</parent>
 
 	<properties>
-		<version.mysql.driver>8.0.13</version.mysql.driver>
+		<version.mysql.driver>8.0.16</version.mysql.driver>
 	</properties>
 
 	<dependencies>
