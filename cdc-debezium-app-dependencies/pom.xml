@@ -24,7 +24,7 @@
 		<spring-kafka.version>2.2.7.RELEASE</spring-kafka.version>
 		<spring-jdbc.version>5.2.1.RELEASE</spring-jdbc.version>
 		<!-- Debezium requires a particular mysql-connector version -->
-		<mysql-connector-java>5.1.46</mysql-connector-java>
+		<mysql-connector-java>8.0.16</mysql-connector-java>
 	</properties>
 
 	<dependencyManagement>
