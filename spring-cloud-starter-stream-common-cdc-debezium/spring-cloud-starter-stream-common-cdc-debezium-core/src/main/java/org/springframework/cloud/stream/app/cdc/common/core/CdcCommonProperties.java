@@ -68,7 +68,7 @@ public class CdcCommonProperties {
 		private OffsetPolicy policy = OffsetPolicy.periodic;
 
 		/**
-		 * When a Kafka Connect connector runs, it reads information from the source and periodically records "offsets"
+		 * When a Kafka Connect connector runs, it reads information from the source and periodically records 'offsets'
 		 * that define how much of that information it has processed. Should the connector be restarted, it will use the
 		 * last recorded offset to know where in the source information it should resume reading.
 		 */
@@ -213,7 +213,7 @@ public class CdcCommonProperties {
 		private DeleteHandlingMode deleteHandlingMode = DeleteHandlingMode.drop;
 
 		/**
-		 * Fields from the change event’s source structure to add as metadata (prefixed with "__") to the flattened record
+		 * Fields from the change event’s source structure to add as metadata (prefixed with '__') to the flattened record
 		 */
 		private String addSourceFields = null;
 
