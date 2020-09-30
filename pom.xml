@@ -4,7 +4,7 @@
 
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>cdc-debezium-app-starters-build</artifactId>
-	<version>1.0.4.RELEASE</version>
+	<version>1.0.5.BUILD-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<parent>
